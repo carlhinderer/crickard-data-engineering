@@ -1,0 +1,83 @@
+----------------------------------------------------------------------------
+|  CHAPTER 1 - DATA ENGINEERING                                            |
+----------------------------------------------------------------------------
+
+- Book Contents
+
+    [Section 1 - ETL]
+    1. Data Engineering
+    2. Building Data Engineering Infrastructure
+    3. Reading and Writing Files
+    4. Working with Databases
+    5. Cleaning, Transforming, and Enriching Data
+    6. Building a 311 Data Pipeline
+
+    [Section 2 - Deploying Data Pipelines in Production]
+    7. Features of a Production Pipeline
+    8. Version Control with the NiFi Registry
+    9. Monitoring Data Pipelines
+    10. Deploying Data Pipelines
+    11. Building a Production Data Pipeline
+
+    [Section 3 - Beyond Batch - Real-Time Data Pipelines]
+    12. Building a Kafka Cluster
+    13. Streaming Data with Apache Kafka
+    14. Data Processing with Apache Spark
+    15. Real-Time Edge Data with MiNiFi, Kafka, and Spark
+
+
+
+- Data Engineer Responsibilities
+
+    - Extracting data from different types of formats and databases (Python and SQL)
+    - Transforming and modeling data according to business domain
+    - Loading data into data warehouses or other structures
+    - Infrastructure (Linux, cloud, entire installations)
+
+
+
+- Popular Tools
+
+    - Programming Languages
+        - SQL
+        - Python
+        - JVM languages like Java and Scala
+
+    - Databases
+        - Proprietary SqlServer and Oracle
+        - Open Source PostgreSQL and MySQL
+
+    - Data Warehousing Databases
+        - Amazon RedShift
+        - Google BigQuery
+        - Apache Cassandra
+        - ElasticSearch (also Solr and Lucene)
+
+    - Data Processing Engines
+        - Apache Spark
+        - Apache Storm
+        - Apache Flink and Samza
+
+    - Data Pipeline
+        - Simple crontab
+        - Airflow
+        - Nifi
+        - Luigi
+        
+
+
+- Apache Airflow
+
+    - Workflow management platform built by Airbnb
+    - Composed of a web server, scheduler, metastore, queueing system, and executors
+    - Uses DAGs to manage dependencies
+    - Most popular solution
+
+
+
+- Apache NiFi
+
+    - Framework for building data engineering pipelines, built by NSA
+    - Write processors in Jython, Clojure, Scala, Groovy
+    - Much fancier GUI than Airflow
+    - Also uses DAGs to manage dependencies
