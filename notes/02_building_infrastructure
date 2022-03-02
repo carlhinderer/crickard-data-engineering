@@ -85,5 +85,12 @@
 
 
 
+- Installing and Configuring Apache Airflow
 
-- 
+    - Installing Arache Airflow
+
+        # Install airflow with desired extensions
+        $ pip install 'apache-airflow[postgres,slack,celery]'
+
+        # Initialize the airflow database
+        $ airflow initdb
