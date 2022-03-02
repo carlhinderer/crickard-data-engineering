@@ -1,0 +1,30 @@
+services:
+  db:
+    container_name: pg_container
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_PASSWORD: root
+      POSTGRES_USER: root
+    image: postgres
+    ports:
+    - published: 5439
+      target: 5432
+    volumes:
+    - pg_data:/var/lib/postgresql/data:rw
+  nifi_app:
+    container_name: nifi_app_container
+    environment:
+      NIFI_WEB_HTTPS_PORT: '9300'
+      SINGLE_USER_CREDENTIALS_PASSWORD: pwpw12345678
+      SINGLE_USER_CREDENTIALS_USERNAME: admin
+    image: apache/nifi
+    ports:
+    - published: 9300
+      target: 9300
+    volumes:
+    - nifi_app_volume:/opt/nifi/nifi-current/ls-target:rw
+version: '3.8'
+volumes:
+  nifi_app_volume: {}
+  pg_data: {}
+
