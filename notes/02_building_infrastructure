@@ -1,0 +1,89 @@
+----------------------------------------------------------------------------
+|  CHAPTER 2 - BUILDING OUR DATA ENGINEERING INFRASTRUCTURE                |
+----------------------------------------------------------------------------
+
+- NiFi Components
+
+    - Nifi Components and Concepts
+
+        - Process Group = A collection of processors and their connections, the smallest unit 
+            to be saved in version control (Nifi Registry).
+
+        - Processor = A processing unit that (mostly) has input and output linked to another 
+            processor by a connector. Each processor is a black-box that executes a single 
+            operation.
+    
+        - FlowFile = This is the logical set of data with two parts (content and attributes),
+            which passes between the Nifi Processors.
+
+        - Connection = A Connection is a queue that routes FlowFiles between processors. The 
+            routing logic is based on conditions related to the processor’s result; a connection 
+            is associated with one or more result types. A connection’s conditions are the 
+            relationships between processors, which can be static or dynamic. While static 
+            relationships are fixed (for example — Success, Failure, Match, or Unmatch), the 
+            dynamic relationships are based on attributes of the FlowFile, defined by the user.
+    
+        - Port = The entry and exit points of a Process Group. Each Process Group can have one or 
+            more input or output ports, distinguished by their names.
+    
+        - Funnel = Combines the data from several connections into a single connection.
+
+
+
+- Running NiFi Application in Docker Container
+
+    - Instructions here 
+      (https://medium.com/analytics-vidhya/setting-apache-nifi-on-docker-containers-a00e862a8399)
+
+
+    - To launch a the Nifi application in a container:
+
+        $ docker run --name nifi-app
+                     -p 9300:9300     # Host port changed from default 8080
+                     -i
+                     -v nifi-app-volume:/opt/nifi/nifi-current/ls-target
+                     -e NIFI_WEB_HTTPS_PORT='9300'
+                     apache/nifi
+
+
+    - The application should be accessible at port 9300.
+
+        $ docker exec -i -t nifi-app /bin/bash
+
+
+    - To log into the Nifi dashboard:
+
+        https://localhost:9300/nifi/
+
+      
+    - And get the automatically generated username and pw from the Nifi container logs:
+
+        Generated Username [username123]
+        Generated Password [password123]
+
+      Or we could specify them as environment variables:
+
+        $ docker run ...
+                     -e SINGLE_USER_CREDENTIALS_USERNAME=admin
+                     -e SINGLE_USER_CREDENTIALS_PASSWORD=pwpw12345678
+
+
+
+- Quick NiFi Tutorial
+
+    - Add a new 'GenerateFlowFile' type processor by dragging it onto the canvas.  This
+        processor creates flow files with random data.  It is useful for load testing,
+        configuration, and simulation.
+
+
+    - Next, we add another processor of 'PutFile' type.  This processor writes the contents of
+        a FlowFile to the local file system.
+
+
+    - Next, we drag a relationship from the 'GenerateFlowFile' to the 'PutFile'.  To run the
+        flow, we select 'Run' on the 'GenerateFlowFile'.
+
+
+
+
+- 
