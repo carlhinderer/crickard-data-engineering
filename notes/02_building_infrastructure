@@ -129,12 +129,27 @@
 
 
 
-- Installing and Configuring Apache Airflow
+- Running Apache Airflow
 
-    - Installing Arache Airflow
+    - Running Arache Airflow in Docker containers:
+        (https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html)
 
-        # Install airflow with desired extensions
-        $ pip install 'apache-airflow[postgres,slack,celery]'
 
-        # Initialize the airflow database
-        $ airflow initdb
+    - When running on Linux, need to pass in your uid so that files are not created with a
+        root user.
+
+        $ mkdir -p ./dags ./logs ./plugins
+        $ echo -e "AIRFLOW_UID=$(id -u)" > .env
+
+
+    - The containers started are:
+
+        1. airflow-scheduler = monitors tasks and DAGs, triggers tasks once dependencies complete
+        2. airflow-webserver = web interface
+
+
+    - Access the web server at:
+
+        http://localhost:8080
+        u: airflow
+        p: airflow
