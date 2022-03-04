@@ -94,7 +94,38 @@
         The second service is for pgadmin4.
 
 
-    - To get postgres host for pgadmin4, look at 'wlp2s0' output from ifconfig.
+    - To get postgres host for pgadmin4, look at 'wlp2s0' output from ifconfig for the local 
+        IP address.
+
+
+
+- Installing and Configuring ElasticSearch and Kibana
+
+    - We're using the official docker-compose.yml from the ElasticSearch site, which is used
+        to create a 3-node ElasticSearch cluster
+
+        (https://www.elastic.co/guide/en/elastic-stack-get-started/current/
+         get-started-stack-docker.html#run-docker-secure)
+
+
+    - To get the cluster working, we had to increase the host's limits on mmap counts.
+        (https://www.elastic.co/guide/en/elasticsearch/reference/5.0/vm-max-map-count.html)
+
+        $ sudo sysctl -w vm.max_map_count=262144
+
+
+    - To log into ElasticSearch:
+
+        https://localhost:9200/
+        u: elastic
+        p: espw1234
+
+
+    - To log into Kibana:
+
+        http://localhost:5601/
+        u: elastic
+        p: espw1234
 
 
 
