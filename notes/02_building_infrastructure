@@ -68,6 +68,9 @@
                      -e SINGLE_USER_CREDENTIALS_PASSWORD=pwpw12345678
 
 
+    - We also have a 'docker-compose.yml' to spin up the NiFi app with all of these settings.
+
+
 
 - Quick NiFi Tutorial
 
@@ -82,6 +85,16 @@
 
     - Next, we drag a relationship from the 'GenerateFlowFile' to the 'PutFile'.  To run the
         flow, we select 'Run' on the 'GenerateFlowFile'.
+
+
+
+- Installing and Configuring Postgres
+
+    - First service in docker-compose is for the Postgres instance, which has its own volume.
+        The second service is for pgadmin4.
+
+
+    - To get postgres host for pgadmin4, look at 'wlp2s0' output from ifconfig.
 
 
 
