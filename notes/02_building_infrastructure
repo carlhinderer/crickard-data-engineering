@@ -145,7 +145,12 @@
     - The containers started are:
 
         1. airflow-scheduler = monitors tasks and DAGs, triggers tasks once dependencies complete
-        2. airflow-webserver = web interface
+        2. airflow-webserver = web interface (available at http://localhost:8080)
+        3. airflow-worker = worker that executes the tasks given by the scheduler
+        4. airflow-init = the initialization service
+        5. flower = flower app for monitoring the environment (available at http://localhost:5555)
+        6. postgres = the database
+        7. redis = the broker that forwards messages from scheduler to worker
 
 
     - Access the web server at:

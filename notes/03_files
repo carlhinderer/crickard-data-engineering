@@ -1,0 +1,57 @@
+----------------------------------------------------------------------------
+|  CHAPTER 3 - READING AND WRITING FILES                                   |
+----------------------------------------------------------------------------
+
+- Writing CSVs
+
+    - To write a CSV with 1000 rows:
+
+        from faker import Faker
+        import csv
+
+        output = open('data/data.CSV','w')
+        fake = Faker()
+
+        header = ['name','age','street','city','state','zip','lng','lat']
+        mywriter = csv.writer(output)
+        mywriter.writerow(header)
+
+        for r in range(1000):
+            mywriter.writerow([fake.name(),
+                               fake.random_int(min=18, max=80, step=1), 
+                               fake.street_address(), 
+                               fake.city(),
+                               fake.state(),
+                               fake.zipcode(),
+                               fake.longitude(),
+                               fake.latitude()])
+            output.close()
+
+
+
+- Reading CSVs
+
+    import csv
+
+    with open('data/data.csv') as f:
+        myreader = csv.DictReader(f)
+        headers = next(myreader)
+
+        for row in myreader:
+            print(row['name'])
+
+
+
+- CSVs with Pandas
+
+    - Reading CSVs with pandas
+
+        import pandas as pd
+        df = pd.read_csv()('data.CSV')
+
+
+    - Writing CSVs with pandas
+
+        data = {'Name': ['Paul','Bob','Susan','Yolanda'], 'Age': [23,45,18,21]}
+        df = pd.DataFrame(data)
+        df.to_csv('data/fromdf.csv', index=False)

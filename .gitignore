@@ -132,3 +132,6 @@ dmypy.json
 dags/
 logs/
 plugins/
+
+# Data
+data/
