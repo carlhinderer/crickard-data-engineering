@@ -2,7 +2,7 @@
 |  CHAPTER 3 - READING AND WRITING FILES                                   |
 ----------------------------------------------------------------------------
 
-- Writing CSVs
+- CSVs with the Standard Library
 
     - To write a CSV with 1000 rows:
 
@@ -28,21 +28,27 @@
             output.close()
 
 
+    - To read a CSV:
 
-- Reading CSVs
+        import csv
 
-    import csv
+        with open('data/data.csv') as f:
+            myreader = csv.DictReader(f)
+            headers = next(myreader)
 
-    with open('data/data.csv') as f:
-        myreader = csv.DictReader(f)
-        headers = next(myreader)
-
-        for row in myreader:
-            print(row['name'])
+            for row in myreader:
+                print(row['name'])
 
 
 
 - CSVs with Pandas
+
+    - Writing CSVs with pandas
+
+        data = {'Name': ['Paul','Bob','Susan','Yolanda'], 'Age': [23,45,18,21]}
+        df = pd.DataFrame(data)
+        df.to_csv('data/fromdf.csv', index=False)
+
 
     - Reading CSVs with pandas
 
@@ -50,8 +56,65 @@
         df = pd.read_csv()('data.CSV')
 
 
-    - Writing CSVs with pandas
 
-        data = {'Name': ['Paul','Bob','Susan','Yolanda'], 'Age': [23,45,18,21]}
-        df = pd.DataFrame(data)
-        df.to_csv('data/fromdf.csv', index=False)
+- JSON with the Standard Library
+
+    - Writing JSON 
+
+        import JSON
+
+        output = open('data/data.json', 'w')
+        fake = Faker()
+
+        all_data = {}
+        all_data['records'] = []
+
+        for x in range(1000):
+            data = { "name" :   fake.name(),
+                     "age" :    fake.random_int(min=18, max=80, step=1),
+                     "street" : fake.street_address(),
+                     "city" :   fake.city(),
+                     "state" :  fake.state(),
+                     "zip" :    fake.zipcode(),
+                     "lng" :    float(fake.longitude()),
+                     "lat" :    float(fake.latitude()) }
+            all_data['records'].append(data)
+
+        json.dump(all_data, output)
+
+
+    - Reading JSON
+
+        with open('data/data.json', 'r') as f:
+            data = json.load(f)
+            first_record = data['records'][0]
+            print(first_record)
+
+
+
+- JSON with pandas
+
+    - For simple JSON files with one record per line, we can just use 'pd.read_json' and
+        'pd.to_json'.  However, our example is slightly more complex since our records are 
+        nested in a 'records' dictionary.
+
+
+    - For more involved parsing:
+
+        import pandas.io.json as pd_json
+
+        f = open('data.json', 'r')
+        data = pd_json.loads(f.read())
+        df = pd_json.json_normalize(data, record_path='records')
+
+        # Gets the first 2 rows, grouped by attribute
+        df.head(2).to_json()
+
+        # Gets the first 2 rows, grouped by row
+        df.head(2).to_json(orient='records')
+
+
+
+- Building a CSV to JSON Pipeline in Airflow
+
+    - 

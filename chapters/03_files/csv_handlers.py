@@ -4,14 +4,6 @@ import pandas as pd
 from faker import Faker
 
 
-def read_csv():
-    with open('data/data.csv') as f:
-        myreader = csv.DictReader(f)
-        headers = next(myreader)
-
-        for row in myreader:
-            print(row['name'])
-
 def write_csv():
     output = open('data/data.csv','w')
     fake = Faker()
@@ -32,14 +24,22 @@ def write_csv():
 
     output.close()
 
-def read_csv_pandas():
-    df = pd.read_csv('data/data.csv')
-    print(df.head(10))
+def read_csv():
+    with open('data/data.csv') as f:
+        myreader = csv.DictReader(f)
+        headers = next(myreader)
+
+        for row in myreader:
+            print(row['name'])
 
 def write_csv_pandas():
     data = {'Name': ['Paul','Bob','Susan','Yolanda'], 'Age': [23,45,18,21]}
     df = pd.DataFrame(data)
     df.to_csv('data/fromdf.csv',index=False)
+    
+def read_csv_pandas():
+    df = pd.read_csv('data/data.csv')
+    print(df.head(10))
 
 
 if __name__ == '__main__':
