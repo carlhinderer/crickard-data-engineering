@@ -115,6 +115,32 @@
 
 
 
+- Airflow DAG Presets
+
+    a) @once
+    b) @hourly – 0 * * * *
+    c) @daily – 0 0 * * *
+    d) @weekly – 0 0 * * 0
+    e) @monthly – 0 0 1 * *
+    f) @yearly – 0 0 1 1 *
+
+
+
+- Specifying Relationships in Airflow
+
+    # Set downstream (equivalent)
+    print_starting_task.set_downstream(csv_to_json_task)
+    print_starting_task >> csv_to_json_task
+
+    # Set upstream (equivalent)
+    csv_to_json_task.set_upstream(print_starting_task)
+    csv_to_json_task << print_starting_task
+
+
+
 - Building a CSV to JSON Pipeline in Airflow
 
-    - 
+    - First, we create a simple DAG and put it in a new DAGs directory.
+
+
+

@@ -129,9 +129,9 @@ dmypy.json
 .pyre/
 
 # Airflow directories
-dags/
 logs/
 plugins/
 
 # Data
 data/
+shared_data/
