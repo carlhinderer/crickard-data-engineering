@@ -134,4 +134,5 @@ plugins/
 
 # Data
 data/
+output/
 shared_data/
