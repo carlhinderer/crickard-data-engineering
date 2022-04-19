@@ -158,3 +158,39 @@
         http://localhost:8080
         u: airflow
         p: airflow
+
+
+    - When running natively without Docker:
+
+        - Initialize the airflow database:
+
+            $ airflow db init
+
+
+        - Run the airflow scheduler:
+
+            $ airflow scheduler
+
+
+        - Create a user:
+
+            $ airflow users  create --role Admin --username admin --email admin \
+                --firstname admin --lastname admin --password admin
+
+
+        - Run the airflow webserver:
+
+            $ airflow webserver
+
+            # Runs on port 8080 by default
+            http://localhost:8080
+
+
+    - By default, Airflow loads a few example DAGs to get new users started.  To remove these, we
+        need to edit 'airflow.cfg'.
+
+        # airflow.cfg
+        load_examples = False
+
+        # Now we need to update the metadata in our database
+        $ airflow db reset

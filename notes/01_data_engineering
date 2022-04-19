@@ -48,9 +48,9 @@
         - Open Source PostgreSQL and MySQL
 
     - Data Warehousing Databases
-        - Amazon RedShift
-        - Google BigQuery
-        - Apache Cassandra
+        - Amazon RedShift (Columnar)
+        - Google BigQuery (Columnar)
+        - Apache Cassandra (Columnar)
         - ElasticSearch (also Solr and Lucene)
 
     - Data Processing Engines
