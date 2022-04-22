@@ -61,7 +61,8 @@
 
     - Writing JSON 
 
-        import JSON
+        from faker import Faker
+        import json
 
         output = open('data/data.json', 'w')
         fake = Faker()
@@ -140,7 +141,32 @@
 
 - Building a CSV to JSON Pipeline in Airflow
 
-    - First, we create a simple DAG and put it in a new DAGs directory.
+    - First, we'll create a shared data folder and add it to our Airflow docker-compose.yml.
+        This way, we can easily pass data files to Airflow.
+
+
+    - Next, we create a simple DAG and put it in the local DAGs directory created by the Airflow
+        docker-compose, which is also mapped into the Airflow sercvices.
+
+
+    - Now, when we start the web server, we can see our DAG in the list of DAGS to run.
 
 
 
+- Handling Files Using Nifi Processors
+
+    - Creating flows in Nifi takes more steps than creating simple conversion in Airflow.  The 
+        tradeoff is that the GUI makes the series of steps understandable, even to non-developers.
+
+
+    - In this flow, we'll use these steps:
+
+        1. GetFile (to read the 'data.csv' file)
+        2. SplitRecord (separates each row into a separate FlowFile)
+        3. QueryRecord (runs a sql query to filter the rows we want)
+        4. ExtractText (search through an attribute with a regex to find user's name)
+        5. UpdateAttribute (add a name attribute to each row with the user's name)
+        6. PutFile (save the updated csv records to disk)
+
+      We'll create a data pipeline that reads in the 'data.csv' file, runs a query for all people
+        over 40, and record the results to a file.
