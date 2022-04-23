@@ -1,0 +1,119 @@
+----------------------------------------------------------------------------
+|  CHAPTER 4 - WORKING WITH DATABASES                                      |
+----------------------------------------------------------------------------
+
+- Setting Up the SQL Database
+
+    # Create database
+    > CREATE DATABASE dataengineering;
+
+    # Create table
+    > CREATE TABLE users (
+      name TEXT,
+      id INTEGER,
+      street TEXT,
+      city TEXT,
+      zip TEXT
+    );
+
+
+
+- Using psycopg2
+
+    - First, we have to install the psycopg2 client:
+
+        # Install client
+        $ pip install psycopg2
+
+        # Precompiled binary version
+        $ pip install psycopg2-binary
+
+
+    - Now, we can create a connection:
+
+        import psycopg2 as db
+
+        conn_string = "dbname='dataengineering' host='localhost' user='postgres' password='postgres'"
+        conn = db.connect(conn_string)
+        cur = conn.cursor()
+
+
+
+- Inserting Data into Postgres
+
+    - Now, we can insert data.
+
+        query = "insert into users (id,name,street,city,zip) values(%s,%s,%s,%s,%s)"
+        data = (1, 'Big Bird', 'Sesame Street', 'Fakeville', '12345')
+
+        # We can use 'mogrify' to see query with arguments bound if we want
+        cur.mogrify(query, data)
+
+        # Now insert data
+        cur.execute(query, data)
+
+        # Commit transaction
+        conn.commit()
+
+
+    - To insert multiple rows:
+
+        from faker import Faker
+
+        fake = Faker()
+        data = []
+        i = 2
+
+        for r in range(1000):
+            data.append((i, fake.name(), fake.street_address(), fake.city(), fake.zipcode()))
+            i += 1
+
+        # Convert array into tuple of tuples
+        data_for_db = tuple(data)
+
+        # We can use 'executemany' to put all inserts into a single transaction
+        cur.executemany(query, data_for_db)
+        conn.commit()
+
+
+
+- Selecting Data from Postgres
+
+    - Now we can select with psycopg2:
+
+        query = 'select * from users'
+        cur.execute(query)
+
+        # Iterate over results
+        for record in cur:
+            print(record)
+
+        # Can use to get all records instead
+        records = cur.fetchall()
+
+        # Fetch a specified number of records
+        records = cur.fetchmany(number_to_return)
+
+        # Fetch a single record
+        record = cur.fetchone()
+
+        # Get number of records returned
+        cur.rowcount
+
+        # Current record position
+        cur.rownumber
+
+
+    - To write the results to a file:
+
+        f = open('fromdb.csv', 'w')
+        cur.copy_to(f, 'users', sep=',')
+        f.close()
+
+
+    - To select results into a pandas DataFrame:
+
+        import pandas as pd
+
+        df = pd.read_sql('select * from users', conn)
+        df.to_json(orient='records')

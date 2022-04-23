@@ -1,3 +1,4 @@
 apache-airflow[postgres,slack,celery]
 faker
 pandas
+psycopg2
