@@ -117,3 +117,104 @@
 
         df = pd.read_sql('select * from users', conn)
         df.to_json(orient='records')
+
+
+
+- Using ElasticSearch
+
+    - Install the elasticsearch library.
+
+        $ pip install elasticsearch
+
+
+    - To check the version of the library we are using:
+
+        import elasticsearch
+
+        elasticsearch.__version__
+
+
+    - Note that we need to increase the memory map areas count to run the ElasticSearch cluster
+        locally.
+
+        $ sudo sysctl -w vm.max_map_count=262144
+        $ docker-compose up
+
+
+
+- Inserting Data into ElasticSearch
+
+    - To insert Faker data into ElasticSearch:
+
+        from elasticsearch import Elasticsearch
+        from faker import Faker
+
+        # Running locally
+        es = Elasticsearch('https://elastic:espw1234@localhost:9200', 
+                           ca_certs=False,
+                           verify_certs=False)
+        fake = Faker()
+
+        doc = { "name": fake.name(),
+                "street": fake.street_address(),
+                "city": fake.city(),
+                "zip": fake.zipcode() }
+
+        res = es.index(index="users", document="doc")
+        print(res['result']) # created
+
+
+    - Now, we'll bulk insert 999 more users.
+
+        from elasticsearch import helpers
+
+        actions = [
+            {
+                '_index': 'users',
+                '_document': {
+                    'name': fake.name(),
+                    'street': fake.street_address(),
+                    'city': fake.city(),
+                    'zip': fake.zipcode()
+                }
+            }
+            for x in range(998)
+        ]
+
+        res = helpers.bulk(es, actions)
+        print(res)
+
+
+    - We can use Kibana to verify our new index.
+
+        http://localhost:5601
+          > Stack Management
+          > Index Management
+
+
+
+- Querying ElasticSearch
+
+    - To query data from ElasticSearch:
+
+        doc = { "query": {"match_all":{}} }
+        res = es.search(index="users", body=doc, size=10)
+
+        # Print results
+        for doc in res['hits']['hits']:
+            print(doc['_source'])
+
+
+    - Getting results back in JSON makes them easy to work with:
+
+        from pandas.io.json import json_normalize
+
+        df = json_normalize(res['hits']['hits'])
+
+
+    - The 'match_all' query will return all results.  The 'match' query is used to match on a
+        specific field.
+
+        doc = {"query":{"match":{"name":"Ronald Goodman"}}}
+        res = es.search(index="users", body=doc, size=10)
+        print(res['hits']['hits'][0]['_source'])
