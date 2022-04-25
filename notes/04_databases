@@ -197,8 +197,8 @@
 
     - To query data from ElasticSearch:
 
-        doc = { "query": {"match_all":{}} }
-        res = es.search(index="users", body=doc, size=10)
+        query = {"match_all": {}}
+        res = es.search(index="users", query=query, size=10)
 
         # Print results
         for doc in res['hits']['hits']:
@@ -215,6 +215,69 @@
     - The 'match_all' query will return all results.  The 'match' query is used to match on a
         specific field.
 
-        doc = {"query":{"match":{"name":"Ronald Goodman"}}}
-        res = es.search(index="users", body=doc, size=10)
+        query = {'match': {'name':'Victoria Cobb'}}
+        res = es.search(index="users", query=query, size=10)
         print(res['hits']['hits'][0]['_source'])
+
+
+    - You can also use Lucene syntax for queries:
+
+        res = es.search(index="users", q="name:Victoria Cobb", size=10)
+        print(res['hits']['hits'][0]['_source'])
+
+
+
+- More Advanced ElasticSearch Queries
+
+    - ElasticSearch will tokenize strings with spaces in them, splitting them into multiple
+        strings to search.  For example, if we search for 'Jamesberg', we'll get 'Jamesberg' 
+        and 'Lake Jamesberg' back as results.
+
+        # Get City Jamesberg - Returns Jamesberg and Lake Jamesberg
+        query = {"match":{"city":"Jamesberg"}}}
+
+
+    - You can use Boolean queries to specify multiple search criteria. For example, you can
+        use must, must not, and should before your queries.
+
+        # Get City Jamesberg but filter out zip code 63792
+        query = {"bool":{"must":{"match":{"city":"Jamesberg"}},
+                         "filter":{"term":{"zip":"63792"}}}}
+
+
+
+- Using 'scroll' to Handle Larger Results
+
+    - We may have a situation where we have 10,000 results and we need all of them.  
+        ElasticSearch provides the 'scroll' method, which allows you to iterate over the 
+        results to get them all.
+
+
+    - Since we have 1000 records, we will retrieve 500 records at a time.  We have to pass in
+        the length of time we want to make the paginated results available for.
+
+        query = {"match_all": {}}
+
+        res = es.search(
+            index = 'users',
+            query = query
+            scroll = '20m',
+            size = 500
+        )
+
+        # Save the '_scroll_id' and size of result set for use later
+        sid = res['_scroll_id']
+        size = res['hits']['total']['value']
+
+        # Iterate through all the results
+        while (size > 0):
+            # Retrieve next batch of results
+            res = es.scroll(scroll_id = sid, scroll = '20m')
+
+            # Save details for next iteration
+            sid = res['_scroll_id']
+            size = len(res['hits']['hits'])
+
+            # Do something with results
+            for doc in res['hits']['hits']:
+                print(doc['_source'])
