@@ -281,3 +281,20 @@
             # Do something with results
             for doc in res['hits']['hits']:
                 print(doc['_source'])
+
+
+
+- Creating a Postgres to ElasticSearch Airflow DAG
+
+    - We create the DAG to move data from Postgres to ElasticSearch (via an intermediate CSV
+        file) in 'dag/postgres_to_elastic.py'.
+
+
+    - Now we need to start Airflow to run our DAG.
+
+        $ airflow webserver
+        $ airflow scheduler
+
+
+    - Note that each time the DAG runs, a new set of rows from Postgres is inserted into
+        ElasticSearch.  Right now, this process is not idempotent.
