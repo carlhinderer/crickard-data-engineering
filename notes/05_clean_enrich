@@ -233,3 +233,15 @@
 
         # Columns in new DataFrame
         merged.columns
+
+
+
+- Cleaning Data using Airflow
+
+    - We'll create an Airflow DAG to clean our data in 'dags/clean.py'. 
+
+
+    - Now, we can start Airflow to run the DAG:
+
+        $ airflow webserver
+        $ airflow scheduler
