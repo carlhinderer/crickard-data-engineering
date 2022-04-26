@@ -1,0 +1,67 @@
+----------------------------------------------------------------------------
+|  CHAPTER 5 - CLEANING, TRANSFORMATION, & ENRICHING DATA                  |
+----------------------------------------------------------------------------
+
+- Exploratory Data Analysis
+
+    - In this chapter, we'll use e-scooter data from the City of Albuquerque.
+
+        import pandas as pd
+
+        df = pd.read_csv('scooter.csv')
+
+
+    - Now, we can explore the data.
+
+        # DataFrame schema
+        df.columns
+        df.dtypes
+
+        # Look at data
+        df.head()
+        df.tail()
+
+
+    - To select a subset of columns:
+
+        # Look at more columns in results
+        pd.set_option('display.max_columns', 500)
+
+        # Look at a column of the DataFrame
+        df['DURATION']
+
+
+    - To select a subset of rows:
+
+        # Look at several columns of the DataFrame
+        df[['trip_id', 'DURATION', 'start_location_name']]
+
+        # Look at a random sample of rows
+        df.sample(5)
+
+        # Take a slice
+        df[:10]      # First 10 rows
+        df[10:]      # Everything after the first 10 rows
+        df[3:9]      # Rows 3-8
+
+        # Get a row by row number
+        df.loc[34221]
+
+        # Get a value by row number and column name
+        df.at[2, 'DURATION']
+
+
+    - To select rows based on a condition:
+
+        # Select based on a condition
+        df.where(df['user_id'] == 8417864)
+
+        # Alternate syntax
+        df[(df['user_id'] == 8417864)]
+
+
+    - You can also combine conditional statements:
+
+        one = df['user_id'] == 8417864
+        two = df['trip_ledger_id'] == 1488838
+        df.where(one & two)
