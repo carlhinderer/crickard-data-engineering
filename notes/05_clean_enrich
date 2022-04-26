@@ -2,7 +2,7 @@
 |  CHAPTER 5 - CLEANING, TRANSFORMATION, & ENRICHING DATA                  |
 ----------------------------------------------------------------------------
 
-- Exploratory Data Analysis
+- Exploratory Data Analysis with pandas
 
     - In this chapter, we'll use e-scooter data from the City of Albuquerque.
 
@@ -65,3 +65,87 @@
         one = df['user_id'] == 8417864
         two = df['trip_ledger_id'] == 1488838
         df.where(one & two)
+
+
+
+- Analyzing the Data with pandas
+
+    - The 'describe' method will return summary statistics about each column.
+
+        # Summary statistics about all columns
+        df.describe()
+
+        # Summary statistics about a single column
+        df['start_location_name'].describe()
+
+
+    - To get counts of each distinct values in a column:
+
+        # Get frequencies as counts
+        df['DURATION'].value_counts()
+
+        # Get frequencies as percentages
+        df['DURATION'].value_counts(normalize=True)
+
+        # Separate data into bins and return bin counts
+        df['trip_id'].value_counts(bins=10)
+
+
+
+- Handling Common Data Issues with pandas
+
+    - We may need to drop rows and columns in our data set.
+
+        # Drop a column (and do it in place in the DataFrame)
+        df.drop(columns=['region_id'], inplace=True)
+
+        # Drop a row
+        df.drop(index=[34225],inplace=True
+
+
+    - Instead of dropping an entire column or row, we may want to drop them conditionally using
+        'dropna'.
+
+        'dropna' Arguments
+        ------------------------
+        axis      # Rows(0, default) or Columns(1)
+        how       # Whether to drop row if any column is missing (any, default) or only if all are
+        thresh    # Number of nulls that must be present to drop
+        subset    # Specify a list of rows or columns to search
+        inplace   # Modify existing DataFrame in place (defaults to False)
+
+    
+    - We'll drop rows that are missing a 'start_location_name' in our data.
+
+        # Get rows that have missing start_location_name
+        df['start_location_name'][(df['start_location_name'].isnull())]
+
+        # Drop rows with 'start_location_name' missing
+        df.dropna(subset=['start_location_name'],inplace=True)
+
+
+    - We can also put a default value in place of nulls in either columns or rows.
+
+        df.fillna(value='00:00:00', axis='columns')
+
+
+    - Here, we take all the rows in which start_location and end_location are both null, and we
+        fill them in with default values.
+
+        startstop = df[(df['start_location_name'].isnull()) & (df['end_location_name'].isnull())]
+
+        value = {'start_location_name': 'Start St.', 'end_location_name': 'Stop St.'}
+        startstop.fillna(value=value)
+        startstop[['start_location_name','end_location_name']]
+
+
+    - Here, we drop all rows where the month is 'May'.
+
+        # Get all rows where month is May
+        may = df[(df['month'] == 'May')]
+
+        # Use index from those rows to drop them
+        df.drop(index=may.index, inplace=True)
+
+        # Verify May rows have been dropped
+        df['month'].value_counts()
