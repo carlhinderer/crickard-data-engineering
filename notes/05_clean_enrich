@@ -149,3 +149,87 @@
 
         # Verify May rows have been dropped
         df['month'].value_counts()
+
+
+
+- Creating and Modifying Columns
+
+    - The 'rename' method can be used to rename columns.
+
+        # Rename a column
+        df.rename(columns={'DURATION':'duration'}, inplace=True)
+
+        # Rename multiple columns
+        df.rename(columns={'DURATION':'duration', 'region_id':'region'}, inplace=True)
+
+
+    - To modify all the values in a column:
+
+        # Make all values in a column uppercase
+        df['month'] = df['month'].str.upper()
+
+
+    - Here, we create a new column, and assign it a value of either the 'trip_id' or 'No' based on 
+        the row's 'trip_id'.
+
+        # Create a new column 'new_column' with values '1613335' or 'No'
+        df.loc[df['trip_id'] == 1613335, 'new_column'] = '1613335'
+
+        # Verify results
+        df[['trip_id', 'new_column']].head()
+
+
+    - Here, we split a DateTime column into separate date and time columns:
+
+        # Get datetimes
+        new = df['started_at'].str.split(expand=True)
+
+        # Split into date and time columns and add to original DataFrame
+        df['date'] = new[0]
+        df['time'] = new[1]
+
+
+    - We may just want to convert the DateTime format to make it easier to process.
+
+        # Convert DateTime format
+        df['started_at'] = pd.to_datetime(df['started_at'], format='%m/%d/%Y %H:%M')
+
+        # Now we can use it in comparisons
+        when = '2019-05-23'
+        df[(df['started_at'] > when)]
+
+
+
+- Enriching Data
+
+    - Right now, we have starting locations as addresses, not coordinates.
+
+        # Get top 5 most frequent starting locations
+        new=pd.DataFrame(df['start_location_name'].value_counts().head())
+
+        new.reset_index(inplace=True)
+        new.columns=['address','count']
+
+
+    - We'll get the address in a format that lets us look them up in our geocode file.
+
+        # We only need the street address part
+        n = new['address'].str.split(pat=',',n=1,expand=True)
+
+        # Replace @ with and
+        replaced = n[0].replace('@', 'and')
+
+        # Replace address field
+        new['street'] = replaced
+
+
+    - Now, we'll read our file with the mapping from street addresses to coordinates.
+
+        # Get geocode table
+        geo = pd.read_csv('geocodedstreet.csv')
+
+        # Join the data together
+        merged = pd.merge(new, geo, on='street')
+
+        # Columns in new DataFrame
+        merged.columns
