@@ -8,4 +8,27 @@
         and downloads all the issues for a city, then loads them into ElasticSearch.
 
 
-    - 
+    - First, we need to create a new index in ElasticSearch and specify that the 'coords'
+        attribute is a geo type.
+
+        > ElasticSearch Dashboard
+        > Dev Tools
+        > Console
+
+        PUT scf 
+        {
+            "mappings": {
+                "properties": {
+                    "coords": {
+                        "type": "geo_point"
+                    }
+                }
+            }
+        }
+
+
+    - We have steps in our pipeline:
+
+        1. Download the issues from SeeClickFix
+        2. 
+        3.
