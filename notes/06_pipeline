@@ -1,0 +1,11 @@
+----------------------------------------------------------------------------
+|  CHAPTER 6 - BUILDING A 311 DATA PIPELINE                                |
+----------------------------------------------------------------------------
+
+- Building the Data Pipeline
+
+    - Here, we are creating a pipeline that connects to 'SeeClickFix' once every 8 hours,
+        and downloads all the issues for a city, then loads them into ElasticSearch.
+
+
+    - 
