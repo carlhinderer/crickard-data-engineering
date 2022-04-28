@@ -18,13 +18,17 @@ DEFAULT_ARGS = {
 }
 
 
+ROOT_DIRECTORY = '/home/carl/Code/Python/crickard-data-engineering'
+CSV_FILENAME = ROOT_DIRECTORY + '/output/postgresqldata.csv'
+
+
 def queryPostgresql():
     conn_string = "dbname='dataengineering' host='localhost' user='postgres' password='postgres'"
     conn = db.connect(conn_string)
 
     df = pd.read_sql("select name, city from users", conn)
 
-    df.to_csv('postgresqldata.csv')
+    df.to_csv(CSV_FILENAME)
     print("-------Data Saved------")
 
 
@@ -33,7 +37,7 @@ def insertElasticsearch():
                        ca_certs=False,
                        verify_certs=False)
 
-    df = pd.read_csv('postgresqldata.csv')
+    df = pd.read_csv(CSV_FILENAME)
 
     for i,r in df.iterrows():
         doc = r.to_json()
