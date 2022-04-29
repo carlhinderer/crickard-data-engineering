@@ -1,7 +1,10 @@
 import datetime as dt
 from datetime import timedelta
 import json
+
 import urllib
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -9,6 +12,7 @@ from airflow.operators.python_operator import PythonOperator
 
 import pandas as pd
 from elasticsearch import Elasticsearch
+
 
 default_args = {
     'owner': 'johndoe',
@@ -24,21 +28,31 @@ TRANSFORMED_FILENAME = ROOT_DIRECTORY + '/output/transformed.json'
 
 
 def downloadIssues():
-    try:
-        param = {'place_url': 'bernalillo-county', 'per_page': '100'}
-        url = 'https://seeclickfix.com/api/v2/issues?' + urllib.parse.urlencode(param)
-        rawreply = urllib.request.urlopen(url).read()
+    all_issues = []
+    param = {'place_url': 'bernalillo-county', 'per_page': '100'}
+    url = 'https://seeclickfix.com/api/v2/issues?' + urlencode(param)
+
+    while True:
+        rawreply = urlopen(url).read()
         reply = json.loads(rawreply)
-        with open(ISSUES_FILENAME, 'w') as outfile:
-            json.dump(reply, outfile)
-    except:
-        raise 'Issue Downloading From SeeClickFix Failed'
+        all_issues.extend(reply['issues'])
+        current_page = reply['metadata']['pagination']['page']
+        num_pages = reply['metadata']['pagination']['pages']
+        if current_page >= num_pages: break
+        url = reply['metadata']['pagination']['next_page_url']
+
+    save_issues(all_issues)
+
+
+def save_issues(issues):
+    with open(ISSUES_FILENAME, 'w') as outfile:
+        json.dump(issues, outfile)
 
 
 def convertDataForElasticsearch():
     f = open(ISSUES_FILENAME)
     json_data = json.load(f)
-    df = pd.DataFrame(json_data['issues'])
+    df = pd.DataFrame(json_data)
     df['coords'] = df['lat'].astype(str) + ',' + df['lng'].astype(str)
     df['opendate'] = df['created_at'].str.split('T').str[0]
     df.to_json(TRANSFORMED_FILENAME)
