@@ -8,7 +8,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
 
 import pandas as pd
-
+from elasticsearch import Elasticsearch
 
 default_args = {
     'owner': 'johndoe',
@@ -45,7 +45,16 @@ def convertDataForElasticsearch():
 
 
 def saveIssuesToElasticsearch():
-    pass
+    es = Elasticsearch('https://elastic:espw1234@localhost:9200', 
+                       ca_certs=False,
+                       verify_certs=False)
+
+    df = pd.read_json(TRANSFORMED_FILENAME)
+
+    for i,r in df.iterrows():
+        doc = r.to_json()
+        res = es.index(index="scf", document=doc)
+        print(res)
 
 
 with DAG('311DataPipeline',
