@@ -30,5 +30,66 @@
     - We have steps in our pipeline:
 
         1. Download the issues from SeeClickFix
-        2. 
-        3.
+        2. Transform the data for inserting into ElasticSearch
+        3. Insert the issues into ElasticSearch
+
+
+
+- Building the Kibana Dashboard
+
+    - First, we need to create a new index pattern.
+
+        http://localhost:5601
+
+        > Management
+        > Kibana
+        > Data Views
+
+        > Create Data View
+
+            Name: scf*
+            Timestamp: opendate
+
+
+    - Now, we create a bar chart.
+
+        > Visualize Library
+        > Create
+
+            Type: Bar Vertical Stacked
+            x-axis: Count
+            y-axis: Aggregations > Date Histogram > Monthly
+
+
+    - We create a pie chart.
+
+        > Visualize Library
+        > Pie Chart - Donut
+        > Split Slices > Aggregations > request_type.title.keyword
+
+
+    - We create a counter, which just shows the number of documents currently contained in
+        our index.
+
+        > Visualizations
+        > Metrics
+        > Issues
+
+
+    - We can add text to our visualizations using Markdown syntax.
+
+
+    - Next, we can create a 'Map' visualikzation.
+
+        > Create Map
+        > Add Layer
+        > Documents: scf*
+
+
+    - Finally, we can create a dashboard that contains all of our visualizations:
+
+        1. Our markdown text
+        2. Our bar chart
+        3. Our pie chart
+        4. Our counter
+        5. Our map
