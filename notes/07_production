@@ -1,0 +1,58 @@
+----------------------------------------------------------------------------
+|  CHAPTER 7 - FEATURES OF A PRODUCTION PIPELINE                           |
+----------------------------------------------------------------------------
+
+- Staging of Files
+
+    - This first type of staging involves data in files following extraction from a source,
+        usually a relational database.  These are often CSV files.
+
+
+    - For example, we need to build a data pipeline that takes sales from the website and puts them
+        into the data warehouse once an hour.  
+
+      However, if some part of our processing fails, we cannot just re-query the database to get
+        the same data.  This is because it is an operational database, and data is always changing.
+        This is why we often stage data in files after retrieving it from the database - so we always
+        have an original copy of the data.
+
+
+    - Note that the way we have been using Airflow so far has taken this exact approach.
+
+
+
+- Staging in Databases
+
+    - While staging in files is useful for extraction, we often stage data in a database before
+        loading it into a data warehouse.  Often we stage it into a replica of the data
+        warehouse, and this way we can run some checks to make sure the results are as expected
+        before moving it over to the production data warehouse.
+
+
+    - Note that you can stage data at any point in your pipeline, not just at the beginning and end.
+        Any place that you have staged data is much easier to debug, and it is also a place you can
+        pick back up and retry after failures.
+
+
+    - We have mostly used ETL processes in this book.  There is a growing shift towards ELT, in
+        which you put data immediately into a database after extraction, and do all transformations
+        on the copy.  This is especially useful if you're using SQL for the transformations.
+
+
+
+- Validating Data with Great Expectations
+
+    - If you have data saved in a file or database, you have the perfect time to validate it.
+        We'll use the 'Great Expectations' library, which allows us to create declarative 
+        validations.
+
+      Note that we need Jupyter to view the generated documentation.
+
+
+        # requirements.txt
+        -----------------------------
+        great_expectations
+        jupyter
+
+
+    - 
