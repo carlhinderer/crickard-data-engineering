@@ -86,3 +86,83 @@
 
         # Edit suite
         $ great_expectations suite edit people.validate.suite
+
+
+    - Here are some examples of expectations we can use:
+
+        # Expectations for schema
+        batch.expect_table_row_count_to_be_between(max_value=1100, min_value=900)
+        batch.expect_table_column_count_to_be_equal(value=8)
+
+        batch.expect_table_columns_to_match_ordered_list(
+            column_list=['name', 'age', 'street', 'city', 'state', 'zip', 'lng', 'lat']
+        )
+        
+
+        # Expectations for individual columns
+        batch.expect_column_values_to_not_be_null('age')
+
+        batch.expect_column_min_to_be_between('age', max_value=19, min_value=17)
+        batch.expect_column_max_to_be_between('age', max_value=81, min_value=79)
+        batch.expect_column_mean_to_be_between('age', max_value=51.151, min_value=49.151)
+        batch.expect_column_median_to_be_between('age', max_value=52.0, min_value=50.0)
+
+        batch.expect_column_quantiles_to_be_between(
+            'age',
+            quantile_ranges={
+                'quantiles': [0.05, 0.25, 0.5, 0.75, 0.95],
+                'value_ranges': [[21, 23], [34, 36], [50, 52], [64, 66], [76, 78]]
+            }
+        )
+
+
+
+- Great Expectations Outside the Pipeline
+
+    - A 'tap' is how Great Expectations creates executable Python files to run against your
+        expectation suite.  To create a new one:
+
+        $ great_expectations tap new people.validate peoplevalidatescript.py
+
+
+    - Note that if we are using Airflow, we can just call our expectation suite programatically.
+
+        import sys
+
+        from great_expectations import DataContext
+
+        from airflow.exceptions import AirflowException
+        from airflow import DAG
+        from airflow.operators.bash_operator import BashOperator
+        from airflow.operators.python_operator import PythonOperator
+        
+        def validateData():
+            context = DataContext("/home/paulcrickard/peoplepipeline/great_expectations")
+            suite = context.get_expectation_suite("people.validate")
+
+            batch_kwargs = {
+                "path": "/home/paulcrickard/peoplepipeline/people.csv",
+                "datasource": "files_datasource",
+                "reader_method": "read_csv",
+            }
+
+            batch = context.get_batch(batch_kwargs, suite)
+            results = context.run_validation_operator("action_list_operator", [batch])
+
+            if not results["success"]:
+                raise AirflowException("Validation Failed")
+
+
+
+- Building Idempotent Data Pipelines
+
+    - When your pipeline fails, it must be able to be rerun to produce the same results.  There
+        should not be duplicate records because your pipeline ran multiple times.
+
+
+    - One approach is to use an upsert operation when copying data.  That way, if a record
+        already exists, it will not get created again.
+
+
+    - Another option is to create a new index (appended with a timestamp) every time your
+        pipeline is run.  That way you'll just get a new index without changing any older ones.
