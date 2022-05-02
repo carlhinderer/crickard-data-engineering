@@ -55,4 +55,34 @@
         jupyter
 
 
-    - 
+    - Now we can use it.  First, we'll create a new project directory and generate a file with
+        CSV data.
+
+        $ mkdir peoplepipeline
+        $ cd peoplepipeline
+        $ python generate_data.py
+
+
+    - Now, we'll run the initializer for Great Expectations.
+
+        $ great_expectations init
+
+
+    - We'll create a new data source.
+
+        $ great_expectations datasource new
+
+        Settings:
+          > File
+          > pandas
+          > Data file path
+          > people.validate (or any name)
+
+
+    - We'll create a new suite of expectations.
+
+        # Create suite
+        $ great_expectations suite new
+
+        # Edit suite
+        $ great_expectations suite edit people.validate.suite
