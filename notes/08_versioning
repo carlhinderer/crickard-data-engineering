@@ -1,0 +1,23 @@
+----------------------------------------------------------------------------
+|  CHAPTER 8 - VERSION CONTROL WITH THE NIFI REGISTRY                      |
+----------------------------------------------------------------------------
+
+- The Nifi Registry
+
+    - The Nifi Registry is a Nifi subproject used for version control.  We can install the
+        Registry, add a new bucket, and we are ready to start versioning data pipelines.
+
+        
+    - We can specify the location of the registry to be used in Nifi menu options.
+
+
+    - We can track a processor group in version control by selecting 
+        'Version | Start Version Control'.  If we go to the Nifi Registry, we can now see
+        the component being tracked.
+
+
+    - After making edits to the pipeline, we can commit changes by selecting
+        'Version | Commit Local Changes'.
+
+
+    - We can import a processor group from the Nifi Registry with 'Add Process Group > Import'.
