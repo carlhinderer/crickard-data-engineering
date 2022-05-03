@@ -1,0 +1,29 @@
+----------------------------------------------------------------------------
+|  CHAPTER 10 - DEPLOYING DATA PIPELINES                                   |
+----------------------------------------------------------------------------
+
+- Backpressure
+
+    - We may have some steps in our pipeline that take a lot longer than others, but it doesn't
+        make sense to dump data into the queue faster than it can be processed.
+
+      The ability of a system to slow down sending data to the queue when it is full is called 
+        'backpressure'.
+
+
+
+- NiFi Deployment Strategies
+
+    - Simplest = Keep DEV, TEST, and PROD environments all on the same canvas.  Can just copy 
+        changes over from one environment to the next.  This could work for very small
+        installations only.  The entire canvas is saved in the NiFi registry.
+
+
+    - Middle = Create a separate production environment.  The NiFi registry is moved to a
+        separate machine, and the production environment can pull the latest changes during
+        releases.  This way you can store separate environment variables for the Production
+        environment.
+
+
+    - Most Advanced = Use a separate registry for each environment.  An administrator can move
+        changes through the environments before deploying to production.
