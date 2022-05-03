@@ -1,0 +1,28 @@
+----------------------------------------------------------------------------
+|  CHAPTER 9 - MONITORING DATA PIPELINES                                   |
+----------------------------------------------------------------------------
+
+- Monitoring NiFi
+
+    - We'll look at 3 ways to monitor NiFi:
+
+        1. Using the NiFi GUI
+        2. Using processors
+        3. Using python and the REST API
+
+
+    - You can put notification Processors in between your processing steps.  For instance, the
+        'PutSlack' processor can be configured to report success or failure messages to Slack.
+
+
+    - We can also use API calls to query NiFi about system information.
+
+        import requests
+
+        r = requests.get('http://localhost:9300/nifi-api/system-diagnostics')
+        data = r.json()
+
+        # Print diagnostic information
+        print(data['systemDiagnostics']['aggregateSnapshot']['maxHeap'])
+        print(data['systemDiagnostics']['aggregateSnapshot']['totalThreads'])
+        print(data['systemDiagnostics']['aggregateSnapshot']['heapUtilization'])
