@@ -1,0 +1,19 @@
+----------------------------------------------------------------------------
+|  CHAPTER 11 - BUILDING A PRODUCTION DATA PIPELINE                        |
+----------------------------------------------------------------------------
+
+- Creating Test and Production Environments for NiFi
+
+    - First, we'll need to create 'test', 'staging', and 'production' databases in Postgres
+        for our 3 environments.
+
+
+    - Next, we create some sample data for use in our pipeline in CSV and JSON files.
+
+
+    - Our final pipeline will have these steps:
+
+        1. Read files from the data lake
+        2. Insert the files into staging
+        3. Validate the staging data
+        4. Move staging to the warehouse
