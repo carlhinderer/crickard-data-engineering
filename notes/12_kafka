@@ -1,0 +1,118 @@
+----------------------------------------------------------------------------
+|  CHAPTER 12 - BUILDING AN APACHE KAKFA CLUSTER                           |
+----------------------------------------------------------------------------
+
+- Running a Kafka Cluster with Docker
+
+    - Zookeeper is used by Kafka to store configuration and manage the cluster.
+
+
+    - After copying the docker-compose development configuration
+        (https://github.com/rafaelzimmermann/learn-kafka-with-python.git), we can start the 
+        Zookeeper and Kafka containers.
+        
+        $ docker-compose up
+
+
+    - To create a topic, we can exec into the Kafka container.
+
+        $ docker exec -it kafka_kafka_1 bash
+
+          # Create a topic called 'pageview'
+          $ kafka-topics.sh --bootstrap-server localhost:9092 --create --topic pageview
+
+          # List topics
+          $ kafka-topics.sh --list --bootstrap-server localhost:9092
+
+
+    - To produce messages to the topic:
+
+          # Will give you a prompt to type messages into
+          $ kafka-console-producer.sh --bootstrap-server localhost:9092 --topic pageview
+
+          # Read messages in a topic
+          $ kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pageview -from-beginning
+
+
+
+- Producing Messages with kafka-python
+
+    - First, we need to install the python client library.
+
+        # requirements.txt
+        --------------------------
+        kafka-python
+
+
+    - Now, we can produce a message:
+
+        import random
+        import time
+
+        from kafka import KafkaProducer
+
+        producer = KafkaProducer(bootstrap_servers='localhost:9092')
+
+        while True:
+            producer.send(
+                topic='pageview',
+                key=f"{random.randrange(999)}".encode(),
+                value=f"{\"URL\":\"URL{random.randrange(999)\"}".encode()
+            )
+            time.sleep(1)
+
+
+
+- Consuming Messages with kafka-python
+
+    - Kafka keeps track of which messages were processed
+        by each consumer application using a consumer 'group_id'.  Consumers under a same 'group_id'
+        share messages, parallelizing the work of consuming the messages.
+
+
+    - Now, we can add a message consumer.
+
+        from kafka import KafkaConsumer
+
+        consumer = KafkaConsumer('pageview',
+                                 auto_offset_reset='earliest',
+                                 group_id='pageview-group1',
+                                 bootstrap_servers='localhost:9092')
+
+        for message in consumer:
+            print(f"""
+                topic     => {message.topic}
+                partition => {message.partition}
+                offset    => {message.offset}
+                key={message.key} value={message.value}
+            """)
+
+
+
+- Using Multiple Consumers
+
+    - What makes Kafka powerful is how easy we can parallelize the consumption of the messages,
+        taking away complexity from your code.
+
+
+    - If we start a second consumers with the same 'group_id' as the first one, the new
+        consumer will start consuming messages, while the first one will become idle.  This is
+        because we didn't specify the number of partitions when we created our topic, and the
+        default is 1.
+
+      The number of partitions defines the number of consumers that can be used for each 
+        consumer 'group_id'.
+
+
+    - We'll update our topic to have 2 partitions:
+
+        $ docker exec -it kafka_kafka_1 bash
+
+            $ kafka-topics.sh \
+                --topic pageview \
+                --alter \
+                --partitions 2 \
+                --bootstrap-server localhost:9092
+
+
+    - Now, we can start 2 consumers with the same 'group_id', and they will both consume messages.
