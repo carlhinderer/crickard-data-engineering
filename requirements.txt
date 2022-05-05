@@ -2,6 +2,7 @@ apache-airflow[postgres,slack,celery]
 elasticsearch
 faker
 great_expectations
+kafka-python
 jupyter
 pandas
 psycopg2
