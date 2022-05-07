@@ -1,0 +1,148 @@
+----------------------------------------------------------------------------
+|  CHAPTER 13 - STREAMING DATA WITH APACHE KAFKA                           |
+----------------------------------------------------------------------------
+
+- Understanding Logs
+
+    - We can add basic logging to any Python application using the 'logging' module.
+
+        import logging
+
+        logging.basicConfig(level=0,
+                            filename='python-log.log',
+                            filemode='w',
+                            format='%(asctime)s - %(levelname)s - %(message)s')
+
+        logging.info('Something happened')
+        logging.info('Something else happened, and it was bad')
+
+
+        # Output in log file
+        2020-06-21 10:55:40,278 - INFO - Something happened
+        2020-06-21 10:55:40,278 - INFO - Something else happened, and it was bad
+
+
+    - Logging Levels in 'logging' Module
+
+        Level           Numeric value
+        --------------------------------
+        CRITICAL        50
+        ERROR           40
+        WARNING         30
+        INFO            20
+        DEBUG           10
+        NOTSET           0
+
+
+    - Logs have different uses in different types of applications.
+
+        1. Web server logs are event logs in chronological order
+        2. Databases use logs internally to record transactions
+
+      A 'log' is just an ordered collection of events or records that is append-only.
+
+
+
+- How Kafka Uses Logs
+
+    - Kafka uses logs to store data.  Logs are called 'topics' in Kafka.  They are similar to a
+        database table.  They are saved to disk as a log file.
+
+
+    - Topics can be a single log, but they are usually scaled horizontally into partitions.
+        Each partition is a log file that can be stored on another server.
+
+      In a topic with partitions, the message order guarantee no longer applies to the topic, only
+        to each partition.
+
+
+    - By assigning a key, you guarantee that the records containing the same key will go to the
+        same partition.  Here, 'K:A' and 'K:B' are our keys.
+
+
+                Topic: Transactions
+
+            Partition 1:     1     2     3     4     5
+                             K:A   K:A   K:A   K:A   K:A      (Key)
+
+            Partiton 2:      1     2     3
+                             K:B   K:B   K:B
+
+
+
+- Kafka Producers and Consumers
+
+    - Kafka producers send data to a topic and a partition.  Records can be send round robin to 
+        partitions or you can use a key to send data to specific partitions.
+
+
+    - When you send messages with a producer, you can do it in one of three ways:
+
+        1. Fire and forget = Send the message, don't wait for acknowledgment, records can be lost
+
+        2. Synchronous = Send the message and wait for a response
+
+        3. Asynchronous = Send a message and a callback.  You move on once the message is sent,
+                            but will get a response at some point.
+
+
+    - Consumers read messages from a topic.  Consumers run in a poll loop that runs indefinitely
+        waiting for messages.  Consumers can read from the beginning.  Once they're caught up,
+        they wait for new messages.
+
+      If a consumer reads 5 messages, the 'offset' is 5.  This offset is the position of the
+        consumer in the topic, the bookmark of where they last left off.  A consumer can always
+        start reading a topic from the offset (or a specified offset), which is stored in
+        ZooKeeper.
+
+
+    - If a topic has multiple partitions, it may be writing faster than a single consumer can 
+        read the messages.  In this case we can use additional consumers to distribute the
+        topics.
+
+
+    - A partition can only be consumed by a single consumer in a consumer group.  If there are
+        more consumers in a group than partitions, they will sit idle.
+
+      However, you can create more than one consumer group.  Multiple consumer groups can read
+        from the same partition.  It is a good practice to create a separate consumer group for
+        every application that needs access to the topic.
+
+
+
+- Stream Processing vs Batch Processing
+
+    - 'Bounded' data has an end, whereas 'unbounded' data is constantly created and possibly
+        infinite.  The most important things to remember about streaming data are its unbounded
+        nature and how time has to be handled.
+
+
+    - For example, if you want the minimum from a set of values, this is easy to determine
+        in batch processing.  With streaming, you may ned to keep recomputing it since it may
+        change.
+
+
+    - Bounded data is complete over a time period or window.  Windowing is a method of making
+        unbounded data bounded.
+
+      There are 3 common types of windows:
+
+        1. Fixed (aka Tumbling) windows cover a fixed time and records do not overlap.  For 
+             instance, if we specify a one-minute window, the records fall within each interval.
+
+        2. Sliding windows have a window defined (ie one minute), but the next window
+             starts in less than the window length (ie 30 seconds).  This type of window will
+             have duplicates and is good for rolling averages.
+
+        3. Sessions will not have the same window of time but are events.  For example:
+
+             A. A user logs in to shop
+             B. Their data is streamed for that login session
+             C. Session is defined by session token
+
+
+    - When discussing windows and time, you must also consider what time to use:
+
+        1. Event time = when event happens
+        2. Ingest time = when event was recorded by Kafka topic
+        3. Processing time = when we read the data from the Kafka topic
