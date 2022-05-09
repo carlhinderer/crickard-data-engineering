@@ -146,3 +146,33 @@
         1. Event time = when event happens
         2. Ingest time = when event was recorded by Kafka topic
         3. Processing time = when we read the data from the Kafka topic
+
+
+
+- Writing Kafka Producers and Consumers with confluent-kafka
+
+    - In this case, we'll use the Confluent Kafka library.
+
+        # requirements.txt
+        ---------------------------
+        confluent-kafka
+
+
+    - To get the list of topics we can publish to:
+
+        from confluent_kafka import Producer
+
+        p = Producer({'bootstrap.servers':'localhost:9092'})
+
+        # Get list of topics
+        p.list_topics().topics
+
+        # Get number of partitions for a particular topic
+        t.topics['users'].partitions
+        
+ 
+    - Now, we can write a producer with confluent-kafka, located at
+        'chapters/confluent-python/producer.py'.
+
+
+    - And, we can write a consumer, located at 'chapters/confluent-python/consumer.py'.
