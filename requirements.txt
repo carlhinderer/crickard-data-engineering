@@ -1,4 +1,5 @@
 apache-airflow[postgres,slack,celery]
+confluent-kafka
 elasticsearch
 faker
 great_expectations
