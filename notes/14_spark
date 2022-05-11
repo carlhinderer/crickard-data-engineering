@@ -1,0 +1,143 @@
+----------------------------------------------------------------------------
+|  CHAPTER 13 - STREAMING DATA WITH APACHE KAFKA                           |
+----------------------------------------------------------------------------
+
+- Apache Spark
+
+    - Apache Spark is a distributed data processing engine that can handle both streams and batch 
+        data.  It's core components are:
+
+        + Apache Spark
+            + Spark SQL
+            + Spark Streaming
+            + Mlib
+            + GraphX
+
+
+    - So, we're going to install a fresh copy of Spark.
+
+        # Remove old version
+        $ sudo rm -R /opt/spark
+
+        # Download new version, extract, and move to /opt
+        $ wget https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz
+        $ tar xvf spark-3.2.1-bin-hadoop3.2.tgz
+        $ sudo mv spark-3.2.1-bin-hadoop3.2 /opt/spark
+
+
+    - We'll run Spark locally in standalone mode, which uses a simple cluster manager provided by
+        Spark.
+
+        # Run pyspark interactively
+        $ pyspark
+
+        # Run a pyspark application
+        $ spark-submit csv_to_dataframe.py
+
+
+    - Since we installed Spark on our system, we also have PySpark installed at
+        '/opt/spark/bin'.
+
+      There is also a version that can be installed with pip which contains all the libraries
+        needed to interact with a cluster, but is not used for spinning up a local cluster.
+
+        $ pip install pyspark
+
+
+    - The 'findspark' library can be used to add Spark client code to a Jupyter notebook.
+
+
+
+- PySpark Example - Estimate Pi
+
+    import random
+
+    import pyspark
+    from pyspark.sql import SparkSession
+
+    # Create a session on the local master
+    spark = SparkSession.builder.appName("Pi-Estimation").master("local").getOrCreate()
+
+    # Estimate the value of pi
+    NUM_SAMPLES = 1
+
+    def inside(p):
+        x, y = random.random(), random.random()
+        return x*x + y*y < 1
+
+    count = spark.sparkContext.parallelize(range(0, NUM_SAMPLES)).filter(inside).count()
+
+    print('Pi is roughly {}'.format(4.0 * count / NUM_SAMPLES))
+
+    # Stop the session
+    spark.stop()
+
+
+
+- Using Spark DataFrames
+
+    - To read a CSV file:
+
+        # Read a csv
+        df = spark.read.csv('data.csv')
+        df.show(5)
+        df.printSchema()
+
+        # Infer the Spark schema
+        df = spark.read.csv('data.csv', header=True, inferSchema=True)
+        df.show(5)
+
+
+    - To select specific columns or rows:
+
+        # Select a specific column
+        df.select('name').show()
+
+        # Returns True or False for a given condition for each row
+        df.select(df['age'] < 40).show()
+
+        # Returns DataFrame that meets the condition
+        df.filter(df['age'] < 40).show()
+
+        # Filter and select specific columns
+        df.filter('age<40').select(['name','age','state']).show()
+
+
+    - To work with an array of rows:
+
+        # Get rows that match a condition
+        u40 = df.filter('age<40').collect()
+
+        # Get a single row
+        u40[0]
+        u40[0].asDict()
+        u40[0].asDict()['name']
+
+        # Iterate through rows
+        for x in u40:
+            print(x.asDict())
+
+
+
+- Using Spark SQL
+
+    - First, we need to create a view, then we can query it.  
+
+        # Create a temporary view and query it
+        df.createOrReplaceTempView('people')
+
+        # Results identical to 'filter' method above
+        df_over40 = spark.sql('select * from people where age > 40')
+        df_over40.show()
+
+
+    - We can get summary statistics:
+
+        # Get summary statistics for 'age' column
+        df_over40.describe('age').show()
+
+        # Get counts by state
+        df.groupBy('state').count().show()
+
+        # Get the mean of the 'age' column
+        df.agg({'age': 'mean'}).show()
