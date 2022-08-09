@@ -1,0 +1,130 @@
+-----------------------------------------------------------------------------
+| CHAPTER 1 - DATA ENGINEERING                                              |
+-----------------------------------------------------------------------------
+
+- Contents
+
+    Part I: Foundations and Building Blocks
+
+      1. Data Engineering
+      2. The Data Engineering Lifecycle
+      3. Designing Good Data Architecture
+      4. Choosing Technologies Across the Lifecycle
+
+    Part II: Data Engineering Lifecycle
+
+      5. Data Generation in Source Systems
+      6. Storage
+      7. Ingestion
+      8. Queries, Modeling, and Transformation
+      9. Serving Data for Analytics, Machine Learning, and Reverse ETL
+
+    Part III: Security, Privacy, and the Future of Data Engineering
+
+      10. Security and Privacy
+      11. Future of Data Engineering
+
+
+
+- Definition of Data Engineering
+
+    - Data engineering is the development, implementation, and maintenance of systems and processes 
+        that take in raw data and produce high-quality, consistent information that supports downstream
+        use cases, such as analysis and machine learning. 
+
+
+    - Data engineering is the intersection of security, data management, DataOps, data architecture, 
+        orchestration, and software engineering.
+
+
+    - A data engineer manages the data engineering lifecycle, beginning with getting data from source 
+        systems and ending with serving data for use cases, such as analysis or machine learning.
+
+
+
+- Data Engineering Lifecycle
+
+    
+      GENERATION  -->   |INGESTION --> TRANSFORMATION --> SERVING|   -->  ML
+                        |               STORAGE                  |   -->  Analytics
+                                                                     -->  Reporting
+
+      Undercurrents:
+        SECURITY
+        DATA MANAGEMENT
+        DATA OPS
+        DATA ARCHITECTURE
+        ORCHESTRATION
+        SOFTWARE ENGINEERING
+
+
+
+- History Lesson
+
+    - 1970-2000
+
+        - Relational DB and SQL developed by IBM (early 70s) and popularized by Oracle (late 70s)
+        - Business data warehouse described by Bill Inmon and Ralph Kimball in late 80s-early 90s
+        - Inmon and Kimball methods still central today
+        - Roles such as BI Engineer, ETL Developer, Data Warehouse Engineer became common
+        - Internet led to explosive growth of hardware and data in 90s
+
+
+    - Early 2000s
+
+        - Explosive growth of web companies reqired distributed, 'big data' solutions
+        - Velocity, variety, volume
+        - Google releases papers on GFS(2003) and MapReduce(2004)
+        - Apache Hadoop open sourced in 2006, era of Big Data Engineer was born
+        - AWS creates EC2, S3, DynamoDB, then starts offering these services to other companies with AWS
+
+
+    - 2000s and 2010s
+
+        - Hadoop tools rapidly mature and proliferate, making bleeding-edge tools available to everyone
+        - Transition from batch computing to event streaming
+        - Traditional enterprise/GUI tools suddenly seamed outdated, code-first engineering in vogue
+        - Big Data Engineers managed massive Hadoop clusters (YARN, HDFS, MapReduce)
+        - 'Big Data' became overhyped, was used unnecessarily, then dropped in popularity
+        - Big Data Engineers became Data Engineers, started looking for simpler, more modular solutions
+
+
+    - 2020s
+
+        - Field is still rapidly changing, which will continue
+        - Modern data stack is made of off-the-shelf third party and open source tools
+        - CCPA and GDPR are starting to bring regulation
+
+
+
+- Data Engineer roles are based on organization's Data Maturity Model
+
+    - Stage 1 - Starting with Data
+
+        - Loosely defined goals and ad hoc processes, poorly understood by organization
+        - Foundation for ML doesn't exist
+        - Need to get buy-in from stakeholders, talk to lots of people
+        - Need to identify which architectural components you need
+        - Avoid custom solutions at first, use off-the-shelf
+        - Get some quick wins to demonstrate value
+
+
+    - Stage 2 - Scaling with Data
+
+        - Formal data processes in place, need to be scaled up
+        - Need to create robust, scalable architectures
+        - Need to focus on DevOps
+        - Start building systems that support ML
+        - Adopt proven technologies, not bleeding-edge ones
+        - Need to scale data engineering team also
+
+
+    - Stage 3 - Leading with Data
+
+        - Pipelines are in place for building analytics and ML solutions
+        - Create automation for seamless introduction of new data
+        - Build custom tools to get a competitive advantage
+        - Focus on data governance and quality
+        - Deploy tools for data discovery, catalogs, metadata management
+        - Collaborate with Software Engineers, ML Engineers, Analysts
+        - Don't get distracted or complacent, don't build expensive hobby projects
