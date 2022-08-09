@@ -127,3 +127,125 @@
     - If the data is from a streaming source, does it need to be transformed before reaching its 
         destination? Would an in-flight transformation be appropriate, where the data is transformed 
         within the stream itself?
+
+
+
+- Batch vs Streaming
+
+    - All data we deal with is inherently 'streaming'.  It is always produced and updated continuously
+        at its source.  'Batch ingestion' is a convenient way of processing this stream in large
+        chunks.
+
+
+    - Streaming ingestion allows us to provide data to downstream systems in a continuous, real-time
+        fashion.  The actual latency requirements vary based on domain and requirements.
+
+
+
+- Batch vs Stream Ingestion Considerations
+
+    - If I ingest the data in real time, can downstream storage systems handle the rate of data flow?
+
+    - Do I need millisecond real-time data ingestion? Or would a micro-batch approach work, 
+        accumulating and ingesting data, say, every minute?
+
+    - What are my use cases for streaming ingestion? What specific benefits do I realize by implementing
+        streaming? If I get data in real time, what actions can I take on that data that would be an 
+        improvement upon batch?
+
+    - Will my streaming-first approach cost more in terms of time, money, maintenance, downtime, and 
+        opportunity cost than simply doing batch?
+
+    - Are my streaming pipeline and system reliable and redundant if infrastructure fails?
+
+    - What tools are most appropriate for the use case? Should I use a managed service (Amazon Kinesis, 
+        Google Cloud Pub/Sub, Google Cloud Dataflow) or stand up my own instances of Kafka, Flink, Spark, 
+        Pulsar, etc.? If I do the latter, who will manage it? What are the costs and trade-offs?
+
+    - If I’m deploying an ML model, what benefits do I have with online predictions and possibly 
+        continuous training?
+
+    - Am I getting data from a live production instance? If so, what’s the impact of my ingestion process 
+        on this source system?
+
+
+
+- Transformation
+
+    - Transformation is where we start to provide value to downstream data consumers.
+
+
+    - Batch streaming is most popular, but streaming transformations are increasingly used.
+
+
+    - Business logic is a major driver of transformations.  Data preparation, wrangling, cleaning, and
+        enrichment add value for end consumers.
+
+
+    - Data featurization for ML is another common transformation process.
+
+
+
+- Transformation Considerations
+
+    - What’s the cost and return on investment (ROI) of the transformation?
+
+    - What is the associated business value?
+
+    - Is the transformation as simple and self-isolated as possible?
+
+    - What business rules do the transformations support?
+
+    - Am I minimizing data movement between the transformation and the storage system during 
+        transformation?
+
+
+
+- Serving Data
+
+    - Data only has value if it is consumed.  Data vanity projects can be a big risk for organizations.
+        This was a hallmark of the big data era.
+
+
+    - Analytics Use Case
+
+        - Once data is stored and transformed, it can be used to generate reports or dashboards, or 
+            used for ad hoc analysis.
+
+        - 'Business Intelligence' uses collected data to describe a business's past and current state.
+            Data is usually stored in a clean but somewhat raw form, allowing for ad hoc queries.
+
+        - 'Operational Analytics' focuses on the fine-grained details of automation.  For instance,
+            it could be a live view of inventory or real-time dashboard of website health.
+
+        - 'Embedded Analytics' typically describes customer-facing analytics.
+
+
+    - Machine Learning Use Case
+
+        - Data needs to be of sufficient quality to support reliable feature engineering.  The
+            requirements should be determined collaboratively.
+
+        - Data needs to be discoverable so that data scientists can find it.
+
+        - The organizational split between DS and DE has significant architectural implications.
+
+        - The data set needs to properly resent the ground truth.  It should not be biased.
+
+
+    - Reverse ETL Use Case
+
+        - Reverse ETL is the process of taking the output of the DE lifecycle and feeding it back into
+            the source system.
+
+        - This is known as a bit of an antipattern, but sometimes it is necessary.
+
+
+
+- Security
+
+    - DE's must understand data and access security, and should use the principle of least privilege.
+
+
+    - Data should be protected both in flight and at rest, by using encrpytion, tokenization, data
+        masking, obfuscation, and access controls.
