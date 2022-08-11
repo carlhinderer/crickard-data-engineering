@@ -413,3 +413,158 @@
         - Snowflake
         - DataBricks
 
+
+
+- The Modern Data Stack
+
+    - The modern data stack uses cloud-based, plug-and-play, easy-to-use, off-the-shelf components
+        to create a modular and cost-effective data architecture.
+
+
+        Data Sources  ->  Cloud-Based Data Connector  ->  Cloud DW  ->  BI and Visualization
+
+
+    - Key outcomes of using a modern data stack are self-service, agile data management, and using
+        open source tools.  These stacks have strong user bases and active communitities.
+
+
+
+- Lambda Architecture
+
+    - In the early-mid 2010s, the popularity of working with streaming data exploded with the 
+        emergence of Kafka as a highly scalable message queue and frameworks like Storm and Samza
+        for steaming/real-time analytics.
+
+      Companies could perform new types of analytics and modeling on large amounts of data, user
+        aggregation and ranking, and product recommendations.
+
+
+    - DE's needed to reconcile batch and streaming data into a single architecture.  The lambda
+        architecture was an early attempt to solve this problem.
+
+
+    - In 'Lambda Architecture', you have systems operating independently of each other - batch,
+        stream, and serving.
+
+                                               [Serving]
+         Source   ->  Stream Processing  ->  | Stream Query |  <->  Queries
+         Systems  ->  Stream Processing  ->  | Batch Query  |
+
+
+    - The source system is ideally immutable and append-only, sending data to 2 destinations for
+        processing: stream and batch.
+
+      In-stream processing intends to serve the data with the lowest possible latency in a “speed” 
+        layer, usually a NoSQL database. 
+
+      In the batch layer, data is processed and transformed in a system such as a data warehouse, 
+        creating precomputed and aggregated views of the data. 
+
+      The serving layer provides a combined view by aggregating query results from the two layers.
+
+
+    - Managing multiple systems with different codebases is difficult, and this creates error-prone
+        systems with code and data that are difficult to reconcile.  This approach has fallen out of
+        favor for this reason.
+
+
+
+- Kappa Architecture
+
+    - Kappa Architecture was proposed by Jay Kreps as a solution to the shortcomings of Lambda
+        Architecture.  The idea is to just use a stream-processing platform as the backbone for all
+        data handling.  This facilitates a true EDA.
+
+
+        Stream Source  ->  Stream Processing  ->  Serving Layer  ->  Queries
+
+
+    - This was suggested in 2014, and still hasn't been widely adopted.  Lack of experience with
+        streaming and the expense of streaming systems that can handle huge data volumes are the reason.
+        Batch storage and processing remain much cheaper for large datasets.
+
+
+
+- The Dataflow Model and Unified Batch and Streaming
+
+    - Google has developed the 'Dataflow Model' and the Apache Beam framework to solve the batch/stream
+        mismatch problem.
+
+
+    - The core idea in the Dataflow model is to view all data as events, as the aggregation is performed 
+        over various types of windows.
+
+
+    - Ongoing real-time event streams are 'unbounded data'.  Data batches are simply bounded event
+        streams, and the boundaries provide a natural window.
+
+
+    - Engineers can choose from various windows for real-time aggregation, such as sliding or
+        tumbling.  Real-time and batch processing happen in the same system using nearly identical code.
+
+
+    - The philosophy of 'batch as a special case of streaming' is now more pervasive.  Frameworks like
+        Flink and Spark have adopted a similar approach.
+
+
+
+- Architecture for IoT
+
+    - IoT data is generated from devices that collect data periodically or continuously from the
+        surrounding environment and transmit it to a destination. IoT devices are often low-powered and
+        operate in low-resource/low bandwidth environments.
+
+
+    - A 'device' (aka a 'thing') is some physical hardware connected to the internet.  Devices include:
+
+        - doorbell camera, smartwatch, or thermostat
+        - an AI-powered camera that monitors an assembly line for defective components
+        - a GPS tracker to record vehicle locations
+        - a Raspberry Pi programmed to download the latest tweets
+        - any device capable of collecting data from it's environment
+
+
+    - Devices may also crunch data before sending it ('edge computing') or even run ML ('edge ML').
+
+
+    - An 'IoT gateway' is a hub for connecting devices and securely routing devices to the appropriate
+        destination on the internet.  The gateway is used (rather than just normal networking) to
+        allow devices to connect using extremely little power.
+
+
+        IoT swarm
+
+        +  +  +  +      ->  Gateway   ->
+        +  +  +         ->  Gateway   ->     Message Queue
+        +  +  +  +  +   ->  Gateway   ->
+
+
+    - Ingestion is dependent on late-arriving data, connection issues, data corruption, and schema
+        disparitites.  Architectures and downstream analytics must account for this.
+
+
+    - For remote sensors collecting scientific analysis for later processing, batch storage may be fine.
+        For data that needs to analyzed in real-time, a message queue is more appropriate.
+
+
+
+- Data Mesh
+
+    - The 'data mesh' is a recent response to sprawling monolithic data platforms, such as centralized
+        data lakes and data warehouses, and the 'great divide of data' between operational and
+        analytical data.
+
+
+    - The data mesh approach is to invert these challenges by using domain-driven design principles
+        in data architecture.  The goal is to decentralize the modern data platform.
+
+
+    - The 4 key components of the data mesh:
+
+        1. Domain-oriented decentralized data ownership and architecture
+
+        2. Data as a product
+
+        3. Self-serve data infrastructure as a platform
+
+        4. Federated computational governance
