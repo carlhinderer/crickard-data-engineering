@@ -230,7 +230,7 @@
 
         - The organizational split between DS and DE has significant architectural implications.
 
-        - The data set needs to properly resent the ground truth.  It should not be biased.
+        - The data set needs to properly represent the ground truth.  It should not be biased.
 
 
     - Reverse ETL Use Case

@@ -1,0 +1,215 @@
+-----------------------------------------------------------------------------
+| CHAPTER 3 - DESIGNING GOOD DATA ARCHITECTURE                              |
+-----------------------------------------------------------------------------
+
+- Enterprise Architecture, Defined
+
+    - 'Enterprise architecture' is the design of systems to support change in the enterprise, achieved
+        by flexible and reversible decisions reached through careful evaluation of trade-offs.
+
+
+    - Creating 'two-way doors' that allow decisions to be reversible allow organizations to iterate
+        and improve rapidly according to observed data.
+
+
+    - Technical solutions only exist in support of business goals.
+
+
+
+- Data Architecture, Defined
+
+    - 'Data architecture' is the design of systems to support the evolving data needs of an enterprise, 
+        achieved by flexible and reversible decisions reached through a careful evaluation of 
+        trade-offs.
+
+
+    - 'Operational architecture' encompasses the functional requirements of what needs to happen 
+        related to people, processes, and technology.
+
+      For example, what business processes does the data serve? How does the organization manage data
+        quality? What is the latency requirement from when the data is produced to when it becomes 
+        available to query?
+
+
+    - 'Technical architecture' outlines how data is ingested, stored, transformed, and served along the 
+        data engineering lifecycle. 
+
+      For instance, how will you move 10 TB of data every hour from a source database to your data lake?
+
+
+
+- Good Data Architecture
+
+    - Good data architecture serves business requirements with a common, widely reusable set of building
+        blocks while maintaining flexibility and making appropriate trade-offs. 
+
+
+    - Bad architecture is authoritarian and tries to cram a bunch of one-size-fits-all decisions into a    
+        big ball of mud.
+
+
+
+- Principles of Good Data Architecture
+
+    - AWS's principles for a 'Well-Architected Framework'
+
+        1. Operational excellence
+        2. Security
+        3. Reliability
+        4. Performance efficiency
+        5. Cost optimization
+        6. Sustainability
+
+
+    - Google Cloud's 'Principles for Cloud-Native Architecture'
+
+        1. Design for automation.
+        2. Be smart with state.
+        3. Favor managed services.
+        4. Practice defense in depth.
+        5. Always be architecting.
+
+
+    - Principles for Good Data Architecture
+
+        1. Choose common components wisely.
+        2. Plan for failure.
+        3. Architect for scalability.
+        4. Architecture is leadership.
+        5. Always be architecting.
+        6. Build loosely coupled systems.
+        7. Make reversible decisions.
+        8. Prioritize security.
+        9. Embrace FinOps.
+
+
+
+- Principle #1 - Choose Common Components Wisely
+
+    - Common components are anything with broad applicability across an organization:
+
+        - Object storage
+        - Version control
+        - Observability
+        - Monitoring and orchestration
+        - Processing engines
+
+
+    - Cloud platforms are the ideal place to adopt common components.
+
+
+    - Architects need to be careful not to hamper the productivity of people working on domain-specific
+        problems by forcing them into one-size-fits-all solutions.
+
+
+
+- Principle #2 - Plan for Failure
+
+    - Key terms for evaluating failure scenarios:
+
+        1. Availability = % of time service or component is in operable state
+
+        2. Reliability = probability of system meeting define performance standards over an interval
+
+        3. Recovery Time Objective = max acceptable time for a system outage
+
+        4. Recovery Point Objective = acceptable state after recovery
+
+
+
+- Principle #3 - Architect for Scalability
+
+    - We should be able to scale systems up and down elastically to handle different quantities of data.
+
+
+    - We can even 'scale to zero', deleting the entire cluster when we are done with our task.
+        Many serverless systems do this automatically.
+
+
+
+- Principle #4 - Architecture is Leadership
+
+    - Architects should be highly technically competent but delegate most individual contributor work
+        to others.
+
+
+    - Mentoring the development team to raise their level, so that they can take on more complex issues,
+        is the most crucial job of an architect.
+
+
+
+- Principle #5 - Always Be Architecting
+
+    - Data architects don't just maintain the current state.  They constantly design new things in
+        response to changes in business and technology.
+
+
+    - We need deep knowledge of the current system (the 'baseline') and the 'target architecture', so
+        that we can develop a 'sequencing plan' to get there.
+
+
+
+- Principle #6 - Build Loosely Coupled Systems
+
+    - Teams must be able to test, deploy, and change systems independently.
+
+
+    - Loosely coupled software architecture:
+
+        1. Systems are broken up into many smaller components.
+
+        2. Systems interface with each other through abstraction layers (ie message buses or APIs).
+
+        3. Internal changes of one component don't require changes to other components.
+
+        4. There is no waterfall, global release.  Components are released separately.
+
+
+
+- Principle #7 - Make Reversible Decisions
+
+    - Given the pace of change in data systems, we should expect to be switching components regularly.
+        Making reversible decisions will simplify your architecture and keep it agile.
+
+
+
+- Principle #8 - Prioritize Security
+
+    - 'Hardened-Perimiter' and 'Zero-Trust' Security Models
+
+        - Traditional architectures place a lot of faith in perimeter security, a hardened network
+            perimeter with 'trusted things' inside and 'untrusted things' outside.
+
+        - There are several problems with this model.  Humans can be exploited, causing breaches.
+            Also, the secure computer networks remain connected to the ouside world via email, phones,
+            etc.  Insider attacks and spear fishing have always been a problem.
+
+        - In a cloud-native environment, all assets are connected to the outside world to some degree.
+
+
+    - The Shared Responsibility Model
+
+        - Amazon emphasizes the 'shared responsibility model', which divides security into 2 parts:
+            'security of the cloud' and 'security in the cloud'.
+
+        - AWS is responsible for securing AWS infrastructure.  They provide services you can use
+            securely.
+
+        - Users are responsible for other factors like data sensitivity, the organization's requirements,
+            and applicable laws and regulations.
+
+
+    - All data engineers should think of themselves as security engineers.  Failure to assume these
+        implicit responsibilities 
+
+
+
+- Principle #9 - Embrace FinOps
+
+    - 'FinOps' is a cloud management discipline that enables organizations to get maximum business
+        value by having all parts of the organization collaborate on data-driven spending decisions.
+
+
+    - In the cloud era, most data systems are pay-as-you-go, which can be much more cost effective
+        than traditional capital expenditures.  However, this has to be carefully managed and
+        monitored.
