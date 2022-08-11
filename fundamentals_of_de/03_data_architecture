@@ -213,3 +213,203 @@
     - In the cloud era, most data systems are pay-as-you-go, which can be much more cost effective
         than traditional capital expenditures.  However, this has to be carefully managed and
         monitored.
+
+
+
+- Domains and Services
+
+    - A 'domain' is a real-world subject area for which you're architecting.  A 'service' is a set of
+        functionality whose goal is to accomplish a task.
+
+
+    - A domain can contain multiple services.  For instance a sales system might have order, invoicing,
+        and product services.
+
+
+
+- Distributed Systems, Scalability, and Designing for Failure
+
+    - 4 Characteristics of Data Systems
+
+        1. Scalability
+        2. Elasticity
+        3. Availability
+        4. Reliability
+
+
+
+- Tiers, Monoliths, and Microservices
+
+    - In a 'single-tier architecture', the application and DB are tightly coupled, residing on a single
+        server.  This is useful for prototyping and development only.
+
+
+    - In a 'multitier (aka n-tier) architecture' , the data and application are decoupled.  The layers
+        are hierarchical, and upper layers are dependent on lower layers.
+
+
+    - A 'monolith' consists of a single codebase containing both application logic and UI.
+
+
+    - A 'microservices architecture' contains separate, decentralized, and loosely coupled services.
+
+
+
+- User Access - Single vs MultiTenant
+
+    - As a data engineer, you'll often have to consider how you want to share a data system.
+
+
+    - The first factor to think about is performance.  If there are lots of tenants in a system, will
+        there be a noisy neighbor problem?
+
+
+    - The other thing to think about is security.  Does data from different domains need to be isolated?
+        This depends on the domain.
+
+
+
+- Event-Driven Architecture
+
+    - Events are changes in state.  An event-driven workflow encompasses the ability to create, update,
+        and move events across various points of the DE lifecycle.
+
+        Producer  ->  Event Router  ->  Consumer
+
+
+    - An 'EDA' uses an event-driven workflow to communicate across various services.
+
+
+    - Any time we use loosely coupled services, this is a candidate for EDA.
+
+
+
+- Brownfield vs Greenfield Projects
+
+    - 'Brownfield projects' involve refactoring and reorganizing an existing architecture.  They are
+        constrained by the choices of the present and past.  A thorough understanding of the legacy
+        architecture is required.
+
+
+    - Don't jump into a big-bang overhaul of a brownfield project without a careful plan.  Make
+        reversible, high-ROI decisions.  Use the strangler pattern.
+
+
+    - Some components will not be able to be changed, because they have too many dependencies.  Remember
+        that 'legacy' is a condescending way to describe something that makes money.
+
+
+    - 'Greenfield projects' allow a fresh start, unconstrained by prior architecture.  Make flexible
+        and reversible decisions.  Avoid 'resume-driven development' that doesn't prioritize the
+        project's goals.
+
+
+
+- Data Warehouse
+
+    - A 'data warehouse' is a central data hub used for reporting and analysis.  Data in a DW is 
+        highly formatted and structured for analytics use cases.
+
+
+    - Bill Inmon's original description in 1990 still holds: "a subject-oriented, integrated,
+        nonvolatile, and time-variant collection of data in support of management’s decisions."
+
+
+    - In the past, having a DW was expensive and labor-intensive, so only large companies had them.
+        Pay-as-you-go cloud services have made them available to all companies.
+
+
+    - A data warehouse has 2 main characteristics:
+
+        1. It separates OLAP processes from OLTP databases.  This is critical for performance reasons.
+
+        2. It centralizes and organizes data using ETL to pull from source systems.
+
+
+        Data Sources  ->  ETL System  ->  Data Warehouse  ->  Data Mart
+
+
+    - Traditionally, DW's are queried using the same SQL semantics used in relational DBs.  However,
+        columnar architectures are increasingly used for performing queries over large amounts of
+        data.
+
+
+    - An 'MPP (Massive Parallel Processing) Database' splits procesing between different nodes and
+        servers to scan massive amounts of data.
+
+
+
+- Cloud Data Warehouses
+
+    - AWS Redshift kicked off the cloud data warehouse revolution.  Instead of spending millions of
+        dollars on an MPP system, customers could spin up a cluster and scale it up as demand grows.
+
+
+    - Google BigQuery, Snowflake, and others popularized the idea of separating compute from storage.
+        In this architecture, data is housed in object storage, allowing virtually limitless storage.
+
+
+    - Cloud data warehouses now cover many use cases that required a Hadoop cluster in the very 
+        recent past.  They can process PB-sized amounts of data in a single query.  The line between
+        data warehouses and data lakes is starting to blur.
+
+
+
+- Data Marts
+
+    - A 'data mart' is a more refined subset of a data warehouse designed to serve analytics and
+        reporting.  They are used for 2 reasons:
+
+        1. It makes data more easily accessible for analysts and report developers.
+
+        2. It provides a place to make additional transformations if queries require complex joins
+             or aggregations.
+
+
+
+- Data Lake
+
+    - A 'data lake' is a place to simply dump all your data, structured and unstructured, into a
+        central location.
+
+
+    - The first version of data lakes started with HDFS.  Eventually, they started migrating towards
+        cloud-based object storage.  When this data needs to be queried or transformed, you can
+        spin up a cluster and pick your favorite technology (ie MapReduce, Spark, Ray, Presto, Hive).
+
+
+    - This approach had serious shortcomings.  Many data lakes became data swamps as data grew to
+        unmanageable size with little schema management, data cataloging, or discovery tools.
+
+
+    - With things like GDPR, data being thrown around randomly without a catalog became a huge headache
+        when user records needed to be deleted.
+
+
+    - Large organizations that could affort to hire top talent found significant value in data lakes,
+        but it wasn't cost-effective for other companies.
+
+
+
+- Convergence, Next-Generation Data Lakes, and the Data Platform
+
+    - Various players have sought to enhance the data lake concept.  For example, DataBricks has a
+        'data lakehouse', which incorporates controls and data management while housing data in object
+        storage and supporting a wide variety of query and transformation engines.  The data lakehouse
+        also support ACID transactions.
+
+
+    - Cloud data warehouses now use an approach very similar to data lakes.  They separate compute from
+        storage, support PB-scale queries, store unstructured and semistructured data, and integrate
+        with advanced processing technologies (ie Spark or Beam).
+
+
+    - As this convergence continues, several vendors are offering a complete, integrated data platform.
+        The clear leaders at this point are:
+
+        - AWS
+        - Google Cloud
+        - Azure
+        - Snowflake
+        - DataBricks
+
