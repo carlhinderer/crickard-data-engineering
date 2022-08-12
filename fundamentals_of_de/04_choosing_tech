@@ -1,0 +1,125 @@
+-----------------------------------------------------------------------------
+| CHAPTER 4 - CHOOSING TECHNOLOGIES ACROSS THE DE LIFECYCLE                 |
+-----------------------------------------------------------------------------
+
+- Choosing Tools
+
+    - Architecture is strategic, while tools are tactical.  Architecture is a top-level design,
+        blueprint, and roadmap to satisfying the strategic aims of the business.  It answers what, why,
+        and when.
+
+      
+    - Tools are used to make the architecture a reality.  They answer how.  Always get your
+        architecture right before choosing tools.
+
+
+
+- Team Size and Capabilities
+
+    - If you have a smaller or less technical team, use off-the-shelf and SaaS components as much as
+        possible.
+
+
+
+- Speed to Market
+
+    - In technology, speed to market wins.  You need to choose tech to deliver features and data faster,
+        without compromising quality or security.
+
+
+    - Perfect is the enemy of good.  Slow decisions are the kiss of death to data teams.  Deliver value
+        early and often.
+
+
+    - Choose tools that help you move quickly, reliably, safely, and securely.
+
+
+
+- Interoperability
+
+    - If you are choosing techs A and B, you need to think about how they'll interface with each other.
+        This ranges from built-in to very difficult.
+
+
+    - Most databases allow connections via JDBC or ODBC.  REST APIs are a very common standard also.
+
+
+
+- Cost Optimization and Business Value
+
+    - 'TCO' includes both direct and indirect costs.  'Direct costs' can be directly attributed to an
+        initiative (ie developer salaries or the AWS bill).  'Indirect costs' (aka 'overhead') are
+        independent of the initiative and must be paid regardless of where they're attributed.
+
+
+    - Expenses fall into 2 main groups: capital expenditure and operational expenses.
+
+      'Capital expenditures (capex)' require an up-front investment.  Before the cloud existed, capex
+        to build and operate data centers would be millions of dollars.  A significant capital 
+        expenditure went along with a long-term plan to achieve ROI.
+
+      'Operational expenses (opex)' are more gradual and spread out over time.  The cloud has made
+        this approach possible for large data projects.
+
+
+    - Any choice inherently excludes other possibilities.  'TOCO (Total Opportunity Cost of Ownership')
+        is the cost of lost opportunities we incur when choosing a technology, an architecture, or a
+        process.
+
+
+    - FinOps isn't about saving money.  It'a about making money.  Cloud spending can drive more revenue,
+        increase a customer base, and enable faster feature velocity.
+
+
+
+- Today vs The Future - Immutable vs Transitory Technologies
+
+    - Tools chosen for the future, rather than the present, may be out of date by the time the future
+        actually comes.
+
+
+    - 'Immutable technologies' have stood the test of time.  For example, mature programming languages.
+        Or the common cloud technologies of object storage, networking, security, and servers.  SQL,
+        bash, x86, and C aren't going anywhere.
+
+
+    - 'Transitory technologies' come and go.  For example, JavaScript frameworks over the years.  New
+        well-funded projects in the data space that are "going to make the world a better place" are
+        introduced daily.
+
+
+    - It's a good idea to evaluate the tools you are using about once every 2 years, replacing the 
+        transitory technologies as needed.
+
+
+
+- Location
+
+    - The cloud represents an existential risk to organizations.  If they move too slowly, they'll be
+        left behind by more agile competition.  If they move too quickly, a poorly planned cloud
+        migration could lead to technical failure or spiraling costs.
+
+
+    - On-premises sytems are still the default for established companies.  Companies are responsible for
+        the operation of the hardware and software.  They have to plan for upgrades and load spikes.
+
+
+    - In the cloud, you just rent hardware and managed services from a cloud provider.  The early cloud
+        was dominated by IaaS, but we've seen a steady shift towards PaaS and then SaaS.
+
+
+    - As established businesses migrate to the cloud, the hybrid cloud model is growing in importance.
+        Some organization want to maintain full control over certain functions, keeping them on prem.
+
+
+    - Putting analytics in the cloud is often cost-effective, since data flows primarily in one 
+        direction, avoiding large egress costs.
+
+
+    - A 'multicloud' approach deploys workloads across multiple public clouds.  Some vendors (ie
+        Snowflake and DataBricks) provide their services across multiple clouds to be close to customer
+        infrastructure.
+
+      Others might want different capabilities from different providers.  They use GCP for GKE and 
+        Google Ads, Azure for MS workloads, and AWS for everything else.  We need to be mindful of
+        egress costs and network bottlenecks with this approach.
