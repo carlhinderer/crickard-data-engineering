@@ -1,0 +1,188 @@
+-----------------------------------------------------------------------------
+| CHAPTER 5 - DATA GENERATION IN SOURCE SYSTEMS                             |
+-----------------------------------------------------------------------------
+
+- Sources of Data
+
+    - 'Analog data' creation occurs in the real world (ie speech, sign language, writing, music).
+        It is often transient.
+
+
+    - 'Digital data' is either created by converting analog data to digital form, or it is the native
+        product of a digital system.
+
+
+
+- Source Systems
+
+    - A 'file' is a sequence of bytes, typically stored on disk.  They are a universal medium of data
+        exchange.  The most common files we'll run into are CSV, TXT, JSON, XML, and XLS.  Data
+        engineers also use Parquet, ORC, and Avro.
+
+
+    - APIs are a standard way of exchanging data between systems.  DEs often invest a lot of energy
+        into maintaining custom API connections.
+
+
+    - OLTP databases support a business's ongoing transactions and operations.  They can handle
+        thousands of reads and writes per second.  They commonly support ACID transactions.
+
+
+    - To avoid affecting the operations of OLTP databases, we use OLAP databases to run analytics
+        processing.  These systems are optimized to handle queries that scan lots of records, and
+        are inefficient at lookups of individual records.  DE's will frequently need to read from
+        them for ML or reverse ETL.
+
+
+    - 'Change Data Capture (CDC)' is a method for extracting each change event (insert, update, delete)
+        that occurs in a database.  It is used for replication or generating an event stream for
+        downstream processing.  The method is based on the database technology.
+
+
+    - Logs
+
+        - A 'log' captures information about events that occur in systems.  Common sources of logs 
+            include OS, applications, servers, containers, networks, and IoT devices.  
+
+        - Logs should capture who, what, and when at a minimum.
+
+        - Logs are encoded in binary form (database logs), semistructured form (JSON), or plain text
+            (stdout from an application).
+
+        - Logs have a 'log level' that refers to the amount of event data captured (the 'resolution').
+
+        - Log messages can be written in batches or in real-time.  Individual log entries can be
+            written to a messaging system such as Kafka or Pulsar in real-time applications.
+
+
+    - Databases often use WALs (usually binary files stored in a database-native format).  They are
+        used for recovery, but they also play an important role in generating CDC events in DE
+        pipelines.
+
+
+    - The 'insert-only' pattern can be used to preserve the entire history of changes.  This has to
+        be used carefully, since tables can grow quite large and this can become inefficient.
+
+
+
+- Messages and Streams
+
+    - A 'message' is raw data communicated across 2 or more systems.  A message is typically sent
+        through a 'message queue' from a publisher to a consumer.  Once it is delivered, it is removed
+        from the queue.
+
+
+    - Messages are discrete and singular signals in an event-driven system.  For example, a temperature
+        reading from an IoT device.
+
+
+    - By contrast, a 'stream' is an append-only log of event records.  Streams are ingested and stored
+        in 'event-streaming platforms'.
+
+
+    - As events occur, they are accumulated in an ordered sequence.  A timestamp or ID might order
+        events.  Note that events aren't always delivered in exact order because of subtleties of
+        distribued systems.
+
+
+    - We use streams when we care about what happened over many events.  Because of the append-only
+        nature of streams, records in a stream are persisted over a long retention window (weeks or
+        months).  This allows for complex aggregations and the ability to rewind to a point in time.
+
+
+
+- Types of Time
+
+    - Time is an essential consideration for all data ingestion, and becomes even more critical in the
+        context of streaming.
+
+
+        Event Time      Ingestion Time       Process Time
+        --------------------------------------------------->
+           (Processing Time)
+
+
+    - 'Event time' indicates when an event is generated in a source system.  'Ingestion time' indicates
+        when an event was brought into some kind of storage.  'Process time' indicates when the event
+        was processed.
+
+
+    - You typically want to record all 3 of these times for monitoring purposes.
+
+
+
+- Databases
+
+    - The main characteristics to look for when evaluating a database technology:
+
+        - DBMS = storage engine, query optimizer, disaster recovery, other key components
+        - Lookups = how does the DB index and retrieve data
+        - Query Optimizer
+        - Scaling and distribution
+        - Modeling patterns
+        - CRUD
+        - Consistency
+
+
+    - RDBMS Characteristics
+
+        - Relations (rows) and fields (columns)
+        - Rows stored as contiguous sequence of bytes on disk
+        - Tables indexed by PK
+        - FKs for joins
+        - Normalized schema (typically)
+        - ACID
+
+
+    - Key/Value Stores
+
+        - Records retrieved using unique key
+        - In-memory key/value stores used for caching session data for web applications
+        - Durable key/value stores used to save and update massive amount of state changes
+            (ie ecommerce application shopping cart)
+
+
+    - Document Stores
+
+        - Specialized key/value store
+        - Documents are typically JSON objects
+        - Documents are stored in collections (similar to tables) and retrieved by key
+        - Joins are not supported, which makes normalization difficult
+        - Flexibility of JSON without enforced schema
+        - Need to be very careful with schema changes and downstream impacts
+        - Most document stores allow you to create indexes on fields other than key
+        - Typically need to run a full scan to use for analytics
+
+
+    - Wide-Column
+
+        - Optimized for storing massive amounts of data, high transaction rates, low latency
+        - Can support PB of data and millions of requests per second
+        - Popular in ecommerce, fintech, ad tech, IoT, real-time applications
+        - Do not support complex queries, no index besides row keys
+        - Typically need to export data to an analytics DB for complex queries
+
+
+    - Graph Databases
+
+        - Store data as a set of nodes and edges
+        - Used to analyze connectivity between elements
+        - Example: how many users can be reached by traversing 2 direct connections
+    
+
+    - Search
+
+        - Used to search data's complex and straightforward semantic and structural characteristics
+        - 2 prominent use cases: text search and log analysis
+        - Text search is searching a body of text for keywords or phrases
+        - Log analysis is used for anomaly detection, real-time monitoring, security analytics
+
+
+    - Time Series
+
+        - A 'time series' is a series of values organized by time (ie stock prices throughout the day)
+        - A 'time series database' is optimized for statistical analysis of this data
+        - High-velocity data from IoT, event and application logs, ad tech, fintech
+        - Write-heavy workloads
+        - 'Measurement data' is generated at regular intervals (ie temperature readings)
+        - 'Event-based data' is generated at irregular intervals
