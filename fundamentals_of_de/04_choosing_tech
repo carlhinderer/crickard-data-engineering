@@ -123,3 +123,174 @@
       Others might want different capabilities from different providers.  They use GCP for GKE and 
         Google Ads, Azure for MS workloads, and AWS for everything else.  We need to be mindful of
         egress costs and network bottlenecks with this approach.
+
+
+
+- Cloud Economics
+
+    - Cloud services are similar to financial derivaties in a way.  Cloud providers slice hardware
+        assets into small pieces via virtualization, then sell those pieces with various technical
+        characteristics and risks attached.
+
+
+    - Providers are tight-lipped about details of their internal systems, but there are massive
+        opportunities for cost savings by understanding cloud pricing.
+
+
+    - As an example, GCP admits their archival class storage runs on the same clusters as standard
+        cloud storage.  Yet, the standard storage costs 17x more than the archival storage.
+
+      To guess why this is, we note that a disk has 3 asserts that can be sold to customers - storage
+        capacity, IOPs per second, and a maximum bandwidth for reads.  GCP is likely storing 
+        additional data on hard drives that are already at their IOPs limit as archival space.
+
+
+    - Buying cloud services is not like buying on premises equipment.  This is a widespread cognitive
+        error that leads to huge bills.
+
+      
+    - Lift-and-shifting your existing servers into cloud instances is good for an initial migration,
+        but the cost of running this way in the cloud over time is more expensive than hosting
+        on-premises.
+
+      To truly save money, you need to understand and optimize the cloud pricing model.
+
+
+    - Data engineers need to be mindful of 'data gravity'.  Many cloud providers make it free to move
+        all your data to their platform.  They may change exorbitant amounts to move it back off.
+        Check the egress charges.
+
+
+
+- Build vs Buy
+
+    - We should build and customize solutions only when doing so will provide a competetive advantage
+        for our business.  Otherwise, we should use off-the-shelf solutions.
+
+
+    - 'Community-managed OSS' is the most common path for open source projects.  When using these
+        components, we need to think about mindshare, maturity, and troubleshooting.  Don't use
+        components that are brand new, unpopular, or infrequently maintained.
+
+
+    - 'Commercial OSS' are vendors that host open source software for you as a SaaS offering.  These
+        are companies like Databricks (Spark), Confluent (Kafka), DBT Labs, etc.  When considering
+        these offerings, think about the TCO of hosting the solution yourself vs paying for a
+        hosted version.
+
+
+    - A big market still exists for non-OSS software.  These 'proprietary walled gardens' either
+        come from independent companies or or cloud-platform offerings.
+
+
+    - A proprietary independent solution can work well, especially as a fully managed service in 
+        the cloud.  You should ensure the solution has a large enough user base, it interoperates with
+        other tools, and has a clear, understandable pricing model.
+
+
+    - Cloud vendors also develop and sell their own proprietary solutions (ie AWS DynamoDB).  
+        Pay-as-you-go models can be expensive, and you may be able to purchase reserved capacity at a
+        lower price.
+
+
+
+- Monolith vs Modular
+
+    - Monoliths have been a mainstay for decades.  In waterfall processes, releases were huge, 
+        tightly coupled, and moved at a slow pace.  Many data projects (ie Spark) continue as
+        monoliths to this day.
+
+
+    - Advantages of monoliths:
+
+        - easy to reason about since everything is self-contained
+        - one PL and technology to learn
+
+
+    - Disadvantages of monoliths:
+
+        - brittle due to the number of interrelated parts
+        - a bug introduced in a release can harm the entire system
+        - downtime causes problems for users
+        - multitenancy a problem due to noisy neighbors
+        - switching platforms will be very painful
+
+
+    - Modular systems have come into vogue with microservices.  Microservices can communicate via
+        APIs.  
+
+
+    - Advantages of microservices:
+
+        - manageable sized teams and knowledge domains
+        - components are swappable and can be polyglot
+        - consumers just need to worry about API of a service, not the implementation
+
+
+    - Disadvantages of microservices:
+
+        - there is more to reason about
+        - interoperability is a pain, leads to requiring orchestration
+
+
+    - The 'distributed monolith pattern' is a distributed architecture that still suffers from many
+        of the limitations of monoliths.  We run different services in different nodes, but they
+        all exist in the same codebase.
+
+      Hadoop is an example of this approach.  Upgrades are difficult, and all software must be 
+        installed on all nodes.  One solution is to use ephemeral cloud infrastructure, and another
+        is to decompose the environment with containers.
+
+
+
+- Serverless vs Servers
+
+    - The 'serverless' approach, pioneered by AWS Lambda in 2014, allows developers to run applications
+        without managing servers at all.  The idea is to run small chunks of code on an as-needed basis.
+
+
+    - Lambda uses the FaaS (Function as a Service) model, but there are other flavors of serverless
+        also.
+
+
+    - We should be careful using serverless in data pipelines.  Engineers have found ways to run batch
+        jobs cheaply this way, but calling the function every time an event is generated could be
+        untenably expensive.
+
+
+    - Containers are another very powerful approach to managing infrastructure.  Serverless applications
+        usually run in containers behind the scenes, and k8s can be thought of as a type of 
+        serverless environment.
+
+
+
+- Optimization, Performance, and the Benchmark Wars
+
+    - We see apples-to-oranges comparisons often in the database space, and we should take them with a
+        grain of salt.  Either comparisons are made against something with a completely different use
+        case, or test scenarios with no real-world utility are used.
+
+
+    - Beware of technologies that are 'big data', but use test data sets small enough to fit in a disk
+        cache or even RAM.
+
+
+
+- Undercurrents and Their Impact on Choosing Tech
+
+    - We need to make sure the solution we are using allows for the data management functions required
+        by the organization.  Does the product have good enough security, and does it allow me to
+        comply with regulations?
+
+
+    - How can we manage DataOps with the solution?  Can we restart it if it crashes?  How can we
+        monitor it?  Is there a support team to respond to issues?
+
+
+    - Creating good data architecture requires tradeoffs and reversible decisions.  Avoid unnecessary
+        lock-in.
+
+
+    - Airflow currently dominates the data pipeline orchestration space.  It has an active community
+        and is available on cloud platforms.  It does have a few core nonscalable components 
+        (the scheduler and backend database) that can become bottlenecks.
