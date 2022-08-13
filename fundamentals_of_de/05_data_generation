@@ -186,3 +186,127 @@
         - Write-heavy workloads
         - 'Measurement data' is generated at regular intervals (ie temperature readings)
         - 'Event-based data' is generated at irregular intervals
+
+
+
+- APIs
+
+    - REST
+
+        - Dominant paradigm, laid out by Roy Fielding in 2000
+        - Interactions are stateless
+        - Widely supported with client libraries and connector support
+
+
+    - GraphQL
+
+        - Created by Facebook as a REST alternative to allow more flexible and expressive queries
+        - Build around returning JSON
+
+
+    - Webhooks
+
+        - When events happen in the source system, trigger a call to an HTTP endpoint hosted by consumer
+        - Source can be application backend, web page, or mobile app
+        - Often called 'reverse APIs' since data goes from source system to data sync
+    
+
+    - RPC and gRPC
+
+        - An 'RPC' is a pattern that allows you to run a procedure on a remote system
+        - 'gRPC' is an RPC library developed by Google in 2015
+        - Built around Protocol Buffers format, also from Google
+        - Efficient bidirectional exchange of data over HTTP/2
+
+
+
+- Message Queues and Event-Streaming Platforms
+
+    - Message Queues
+
+        - A 'message queue' is a mechanism to send data (usually small messages) asynchronously
+        - Allow for decoupling of systems, widely used in microservices architectures
+        - Queue buffers messages to handle load spikes
+        - Can use replication to add durability
+
+
+    - Message Ordering and Delivery
+
+        - Order in distributed message queues is a tricky problem
+        - Most queues try their best to be FIFO, this can be strongly guaranteed with extra overhead
+        - Don't assume messages will delivered in order unless technology guarantees it
+
+
+    - Delivery Frequency
+
+        - If a message is sent 'excatly once', the message disappears after the consumer acks it
+        - If it is sent 'at least once', it can be consumed by multiple subscribers or more than once
+        - Ideally, systems should be idempotent, which helps ease the difficulty of exactly once
+
+
+    - Event-Streaming Platforms
+
+        - Used to ingest and process data in an ordered log of records
+        - Data is retained and can commonly be replayed
+
+
+    - Topics
+
+        - A producer sends events to a topic, a collection of related events
+        - A topic can have 0, 1, or multiple producers and consumers
+
+
+          Order Processing System   ->   Web Orders Topic  ->  Marketing
+                                                           ->  Fulfillment
+
+
+    - Stream Partitions
+
+        - Stream partitions are subdivisions of a stream into multiple streams
+        - Messages are distributed across partitions by using the parition key
+        - Messages that should be processed together have the same partiton key
+        - For instance, all messages from a device go to same partition key, use device_id as key
+
+
+
+- Security
+
+    - Is the source system architected so data is secure and encrypted, both with data at rest and 
+        while data is transmitted?
+
+
+    - Do you have to access the source system over the public internet, or are you using a virtual 
+        private network (VPN)?
+
+
+    - Keep passwords, tokens, and credentials to the source system securely locked away. For example, 
+        if you’re using Secure Shell (SSH) keys, use a key manager to protect your keys; the same rule
+        applies to passwords—use a password manager or a single sign-on (SSO) provider.
+
+
+    - Do you trust the source system? Always be sure to trust but verify that the source system is 
+        legitimate. You don’t want to be on the receiving end of data from a malicious actor.
+
+
+
+- Data Management
+
+    - How do you ensure data integrity in upstream systems?
+
+
+    - How will you be notified of schema changes?
+
+
+    - Do we have access to raw data, or will it be obfuscated?  How long should it be retained?  Are
+        we able to access it based on regulations?
+
+
+
+- DataOps
+
+    - How will you be notified of an outage in a source system?  It may be a good idea to have 
+        monitoring on all source systems.
+
+
+    - If something bad does happen, how will your data pipeline be affected?  Can you skip the step?
+        What is the plan to backfill the data when the system is back online?
