@@ -121,7 +121,7 @@
             High-memory servers typically utilize many interconnected CPUs on one board, each with a 
             block of attached RAM.
 
-        - Significantly slowers than CPU cache
+        - Significantly slower than CPU cache
 
 
     - When we talk about system memory, we mean DRAM (Dynamic RAM), a high-density and low-cost form
@@ -210,3 +210,160 @@
         Archival storage 12 hours               Same as object storage once   $0.004/GB per month
                                                   data is available
 
+
+
+- Single Machine vs Distributed Storage
+
+    - When data is distributed across multiple servers, it is known as 'distributed storage'.
+        Distributed storage coordinates the activities of multiple servers.
+
+
+    - Distributed storage is used for both redundancy and scalability.
+
+
+    - Consistency issues arise when distributed storage is used.
+
+
+
+- Eventual vs Strong Consistency
+
+    - Since it takes time to replicate changes across the nodes of a system, a balance exists between
+        getting current data and getting 'sort of current' data in a distributed database.
+
+
+    - The BASE model is defined as:
+
+        Basically Available = Consistent data is available most of the time
+
+        Soft State = The state of a transaction is fuzzy, it is uncertain whether committed or not
+
+        Eventual Consistency = At some point, reading will return consistent values
+
+
+    - DEs often make consistency decisions in 3 places:
+
+        1. Choosing the DB technology
+        2. Configuration parameters for the DB
+        3. On a per-query basis
+
+
+
+- File Storage
+
+    - A 'file' is a data entity with specific read, write, and reference characteristics used by 
+        software and operating systems. It has these characteristics:
+
+        - Finite length = a file is a finite-length stream of bytes
+
+        - Append operations = can append bytes to the file up to the limits of the host storage system
+
+        - Random access = can read from or write to any location in the file
+
+
+    - File storage systems organize files into a directory tree.  To avoid hard-coding file paths,
+        it is usually better to use object storage as an intermediary.
+
+      Manual, low-level file handling processes are best left to one-time ingestion steps or 
+        exploratory stages of the pipeline.
+
+
+    - The most familiar types of file storage are OS-managed filesystems on a local partition of an
+        SSD or magnetic disk.  NTFS (Windows) and ext4 (Linux) are the most popular.  The OS handles
+        the details of storing directory entities, files, and metadata.
+
+      Local filesystems usually have read/write consistency, and OS's employ locking strategies to
+        management concurrent attempts to write a file.
+
+
+    - 'Network-Attached Storage (NAS)' systems provide a file storage system to clients over a network.
+        Servers often ship with built-in NAS-dedicated hardware.
+
+      While there are performance penalties to accessing a filesystem over a network, the advantages
+        include redundancy, reliability, storage pooling, and file sharing.
+
+
+    - Cloud filesystem services provide a fully-managed filesystem to use with multiple VMs and
+        applications.  This is different from standard storage attached to VMs (block storage managed
+        by the VM's OS).  They behave mostly like a NAS.  AWS EFS is a popular example.
+
+
+
+- Block Storage
+
+    - Fundamentally, 'block storage' is the type of raw storage provided by HDDs and SSDs.  A 'block'
+        is the smallest addressable unit of data supported by a disk (512 B on older disks, 4096 B
+        on modern disks).  Blocks typically contain extra bits for error detection/correction and
+        other metadata.
+
+
+    - In the cloud, virtualized block storage is the standard for VMs.  These block storage abstractions
+        allow fine control of storage size, scalability, and data durability beyond that offered by raw 
+        disks.
+
+
+    - Transactional database systems usually access disks at a block level to lay out data for optimal
+        performance.
+
+
+    - Block storage also remains the default option for OS boot disks on cloud VMs.
+
+
+    - 'RAID (Redudant Array of Independent Disks)' simultaneously controls multiple disks to improve
+        data durability, enhance performance, and combine capacity from multiple drives.  An array
+        can appear to an OS as a single block device.  Many different schemes are available to fine-tune
+        the bandwidth vs fault tolerance balance.
+
+
+    - 'SANs (Storage Area Networks)' provide virtualized block storage devices over a network, typically
+        from a storage pool.  They can allow for fine-grained scaling, performance, availability, and
+        durability.  You may encounter them either on-premises or in the cloud.
+
+
+
+- Cloud Virtualized Block Storage
+
+    - 'Cloud Virtualized Block Storage' solutions are similar to SANs, but free engineers from dealing
+        with SAN clusters and networking details.
+
+      
+    - AWS EBS is a popular implementation.  It is the default storage for EC2 VMs.
+
+
+    - EBS volumes store data separate from the instance host server but in the same zone to support
+        high performance and low latency.  This allows EBS volumes to persist after an EC2 instance
+        is shut down, a host fails, or even when the instance is deleted.
+
+      
+    - It is also suitable for applications like databases where durability is a high priority.  Also,
+        EBS replicates all data to at least 2 host machines.
+
+
+    - EBS storage virtualization also suports some advanced features:
+
+        - Can take point-in-time snapshots while the drive is in use and write them to S3
+        - Snapshots after full backup are diffs
+        - EBS volumes can scale to 64 TB, 250K IOPs
+
+
+
+- Local Instance Volumes
+
+    - Cloud providers also offer block storage volumes that are physically attached to the host server
+        running a VM.  These storage volumes are generally very low cost (included with the cost of a
+        VM in EC2).
+
+
+    - Instance store volumes behave esentially like a disk physically attached to a server.  One key
+        difference, however, is that when a VM shuts down or is deleted, the contents of locally
+        attached storage are lost.  This ensures a new VM cannot read disk contents belonging to 
+        another customer.
+
+
+    - Locally attached disks don't support advanced features, like replication, snapshots, or other
+        backup features.
+
+
+    - We can still use them for lots of things, like local caches that don't need features of a service
+        like EBS.  For instance, if we are running EMR on EC2 instances, we just need a job that
+        consumes data from S3, stores it temporarily in the distributed filesystem across the
+        instances, processes it, then writes it back to S3.
