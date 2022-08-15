@@ -1,0 +1,212 @@
+-----------------------------------------------------------------------------
+| CHAPTER 6 - STORAGE                                                       |
+-----------------------------------------------------------------------------
+
+- Storage
+
+    - Storage systems underpin all the major stages (ingegestion, transformation, and serving) of
+        the DE lifecycle.
+
+
+    - Storage Abstractions (Abstractions of storage systems)
+
+        - Data Lake
+        - Data Lakehouse
+        - Data Platform
+        - Cloud Data Warehouse
+
+
+    - Storage Systems (Abstractions of raw ingredients)
+
+        - RDBMS
+        - HDFS
+        - Redis
+        - Object Storage
+        - Kafka
+
+
+    - Raw Ingredients
+
+        - HDD
+        - SDD
+        - RAM
+        - Networking
+        - Serialization
+        - Compression
+        - CPU
+
+
+
+- Magnetic Disk Drives
+
+    - Developed by IBM in the 1950s.  The first commercial magnetic drive, the IBM 350, had a capacity
+        of 3.75 MB.
+
+
+    - Magnetic disks utilize spinning platters coated with a ferromagnetic film. This film is
+        magnetized by a read/write head during write operations to physically encode binary data. 
+
+      The read/write head detects the magnetic field and outputs a bitstream during read operations.
+
+
+    - Magnetic disk drives (HDDs) still form the backbone of bulk data storage systems because they are 
+        significantly cheaper than SSDs.  However, SSDs dramatically outperform them.
+
+
+    - Currently, HDD drives cost ~ $0.03 per GB of storage.  Drives as large as 20 TB are commercially
+        available.
+
+
+    - HDDs have seen a lot of innovations and improvements, but are constrained by physical limits:
+
+        1. 'Disk transfer speed', the rate at which data can be read and written, grows linearly while
+             capacity grows areally (GB per in**2).  Current data center drives support maximum
+             transfer speeds of 300 MB/s.
+
+        2. 'Seek time' is limited by the ability of the drive to physically relocate the read/write
+             heads to the appropriate track on the disk.
+
+        3. 'Rotational latency' is how long the disk must wait for the desired sector to rotate under
+             read/write heads.  Commercial drives typically spin at 7200 rpm.
+
+        4. IOPs is another limitation, crucial for transactional databases.  A magnetic drive supports
+             50-100 IOPs.
+
+
+    - Magnetic disks can sustain extremely high data rates through parallelism.  For instance, object
+        storage distributes data across thousands of drives in clusters.
+
+      In this case, data transfer rates are limited by network performance rather than disk transfer
+        rate.  This makes network components and CPUs crucial also.
+
+
+
+- Solid-State Drives
+
+    - SSDs store data as charges in flash memory cells, which eliminates the mechanical components of
+        magnetic drives.
+
+        - Look up random data in less than 0.1 ms
+
+        - Commercial drives have ransfer rates of many GB/s and tens of thousands of IOPs
+
+
+    - SSDs have revolutionized transactional databases, and are now standard for commercial OLTP 
+        systems.  Allow RDBMS's to handle thousands of transactions per second.
+
+
+    - For cost reasons, magenetic drives are still the standard for high-scale analytics data storage.
+        SSDs can be used to cache frequently accessed data.
+
+
+
+- RAM
+
+    - RAM, also just called 'memory' has specific characteristics:
+
+        - Attached to a CPU and mapped into the CPU address space
+
+        - Stores the code the CPUs execute and the data it directly processes
+
+        - Volatile
+
+        - DDR5 (the latest standard) offers data retrieval latency on the order of 100 ns (roughly
+            1,000x faster than SSDs)
+
+        - A typical CPU can support 100 GB/s bandwidth to attached memory and millions of IOPs
+
+        - Is much more expensive than SSDs (~ $10/GB)
+
+        - Is limited in the amount of RAM attached to an individual CPU and memory controller.
+            High-memory servers typically utilize many interconnected CPUs on one board, each with a 
+            block of attached RAM.
+
+        - Significantly slowers than CPU cache
+
+
+    - When we talk about system memory, we mean DRAM (Dynamic RAM), a high-density and low-cost form
+        of memory.  DRAM stores data as charges in capacitors.  These capacitors leak over time, so
+        data must be frequently refreshed to avoid data loss.
+
+      Other forms of memory, such as static RAM, are used in specialized applications such as CPU
+        caches.
+
+
+    - Current CPUs use von Neumann architecture, with code and data stored together in the same memory
+        space.
+
+
+    - RAM is used by data systems for caching, data processing, and indexing.  When using it, we must
+        always remember it is volatile and a power outage could lead to data loss.
+
+
+
+- Networking and CPU
+
+    - In distributed systems, network performance is often the bottleneck.  While storage standards such
+        as RAID parallelize on a single server, cloud object storage clusters operate both within and
+        across multiple data centers.
+
+
+    - CPUs handle the details of servicing requests, aggregating reads, and distributing writes.
+        Storage becomes a web app with an API, backend service components, and load balancing.
+
+
+
+- Serialization
+
+    - 'Serialization' is the process of flattening and packing data into a standard format the a reader
+        will be able to decode.  It is a critical element in database design, and affects network
+        performance, CPU overhead, query latency, and more.
+
+
+    - Row-based formats such as XML, JSON, and CSV are the most popular formats.
+
+
+    - A serialization algorithm has logic for handling types, imposes rules on data structure, and
+        checks for cyclic references.
+
+
+
+- Compression
+
+    - Highly efficient compression has 3 main advantages in storage systems.
+
+        1. The data is smaller and takes up less space on disk
+
+        2. Increases the practical scan speed per disk
+
+        3. Network performance
+
+
+    - Compression and decompression data have costs, though.  Extra time and resources are needed to 
+        read or write data.
+
+
+
+- Caching
+
+    - The core idea of caching is to store frequently or recently accessed data in a fast access layer. 
+
+      The faster the cache, the higher the cost and the less storage space available. Less frequently 
+        accessed data is stored in cheaper, slower storage.
+
+
+    - Here is a cache hierarchy (note that a microsecond is 1,000 nanoseconds, and a millisecond is 
+        1,000 microseconds):
+
+        Storage type     Data fetch latency     Bandwidth                     Price
+        ----------------------------------------------------------------------------------
+        CPU cache        1 nanosecond           1 TB/s
+        
+        RAM              0.1 microseconds       100 GB/s                      $10/GB
+
+        SSD              0.1 milliseconds       4 GB/s                        $0.20/GB
+
+        HDD              4 milliseconds         300 MB/s                      $0.03/GB
+        
+        Object storage   100 milliseconds       3 GB/s per instance           $0.02/GB per month
+
+        Archival storage 12 hours               Same as object storage once   $0.004/GB per month
+                                                  data is available
+
