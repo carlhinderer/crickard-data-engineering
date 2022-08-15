@@ -367,3 +367,193 @@
         like EBS.  For instance, if we are running EMR on EC2 instances, we just need a job that
         consumes data from S3, stores it temporarily in the distributed filesystem across the
         instances, processes it, then writes it back to S3.
+
+
+
+- Object Storage
+
+    - Object storage contains 'objects' of all shapes and sizes.  In this case, an object is any type
+        of file - TXT, CSV, JSON, images, audio, or videos.
+
+
+    - AWS S3, Azure Blob Storage, and Google Cloud Storage are widely used object stores.  Also, many
+        cloud data warehouses and data lakes sit on object stores.
+
+
+    - Object storage is easy to manage and use.  It was one of the first 'serverless' services, which
+        frees engineers from considering server clusters or disks.
+
+
+    - An object store is a key-value store for immutable data objects.  Objects don't support random
+        writes or appends.  They are written once as a stream of bytes.  To change data, we rewrite
+        the entire object.  Random reads are supported through range requests, but they perform much
+        worse than data stored on an SSD.
+
+
+    - Object stores don’t need to support locks or change synchronization, allowing data storage across 
+        massive disk clusters.  Object stores support extremely performant parallel stream writes and 
+        reads across many disks, and this parallelism is hidden from engineers, who can simply deal with 
+        the stream rather than communicating with individual disks.
+
+
+    - Typical cloud object stores save data in several availability zones, dramatically reducing the 
+        odds that storage will go fully offline or be lost in an unrecoverable way. This durability and
+        availability are built into the cost.
+
+
+
+- Object Stores for DE Applications
+
+    - Object stores provide excellent performance for large batch reads and writes.  This corresponds
+        well to the use case for OLAP systems.
+
+
+    - Object stores are a bad fit for transactional systems or any system with lots of updates per
+        second.  Block storage is a much better fit.  Object stores work well for a low rate of updates,
+        with each update on a large volume of data.
+
+
+    - Object stores are now the gold standard for data lakes.  In the early days of data lakes, the
+        WORM (Write Once, Read Many) pattern was the operational standard.
+
+      Since then, systems such as Apache Hudi and Delta Lake have emerged to manage the complexity of
+        updates, and regulations like GDPR/CCPA have made deletes and updates imperative.  Updates to
+        object storage are also the idea behind data lakehouses.
+
+
+
+- Object Lookup
+
+    - Unlike file stores, there is no directory tree, only a bucket and key:
+
+        s3://oreilly-data-engineering-book/data-example.json
+
+        Bucket:   s3://oreilly-data-engineering-book/
+        Key:      data-example.json
+
+
+    - Note, you can have keys that look like a directory, but there is no actual directory structure.
+
+        s3://oreilly-data-engineering-book/project-data/11/23/2021/data.txt
+
+
+    - Many object stores allow directory-like commands such as 'ls', but we need to understand we are
+        scanning the entire bucket when we do this, and it could lead to performance issues.
+
+
+
+- Object Consistency and Versioning
+
+    - The only way to change an object is to replace it completely.  Object stores may be eventually
+        or strongly consistent.
+
+
+    - Until recently, S3 was eventually consistent.  After a new version of an object was written
+        under the same key, the object store might still sometimes return the old object.
+
+
+    - To impose strong consistency on the object store, we can use a strongly consistent database
+        (ie Postgres).  To read an object, a reader will:
+
+        1. Fetch the latest object metadata from Postgres.
+
+        2. Query the object metadata using the object key.  Read the data if it matches the metadata
+             from Postgres.
+
+        3. If the metadata doesn't match, repeat step 2 until it does.
+
+
+    - When we turn on 'object versioning', we add additional metadata to the object that stipulates
+        a version.  In this case, the key and version metadata together point to a specific version
+        of an object, so we'll always get that exact version back.
+
+
+    - If we do turn on object versioning, we can end up with many versions of the same object, which
+        may be expensive if the objects are large.  We can implement some kind of 'lifecycle policy'
+        to delete old objects if newer versions are available.
+
+
+
+- Cache and Memory-Based Storage Systems
+
+    - RAM offers excellent latency and transfer speeds, but it is volatile.  RAM-based storage systems
+        are generally focused on caching, and data must generally be written to a more durable medium
+        for retention.
+
+
+    - memcached is a key/value store designed for caching DB query results, API call responses, etc.
+        It supports only string and integer types.  It can deliver results with very low latency.
+
+
+    - Redis is also a key/value store, but it supports more complex data types (ie lists or sets).
+        It also builds in multiple persistence mechanisms, including snapshotting and journaling.
+
+      With a typical configuration, Redis writes data once every 2 seconds.  It is suitable for 
+        extremely high performance applications that can tolerate a small amount of data loss.
+
+
+
+- HDFS
+
+    - HDFS is based on the 'GFS (Google File System)' and was initially engineered to process data
+        with the MapReduce programming model.  Hadoop is similar to object storage, except that
+        Hadoop combines compute and storage on the same node.
+
+
+    - Hadoop breaks large files into 'blocks' (chunks of data a few hundred MB in size).  The filesystem
+        is managed by the 'NameNode', which maintains directories, file metadata, and a detailed 
+        catalog of all blocks.
+
+
+    - In a typical Hadoop cluster, the replication factor is set to 3.
+
+
+    - Hadoop is often claimed to be 'dead'.  It is not a bleeding-edge tool any more, and tools like
+        Pig are relegated to legacy jobs.  MapReduce has fallen by the wayside.
+
+      However, Hadoop still appears in many legacy installations, and many companies with massive
+        clusters have no plans to migrate to newer technologies.
+
+
+    - HDFS is still a key ingredient in many big data engines, including AWS EMR.  Spark is also still
+        commonly run on HDFS clusters.
+
+
+
+- Streaming Storage
+
+    - Streaming data has different requirements from non-streaming data.  Traditional message queues
+        delete data after a certain duration, but distributed frameworks like Kafka allow long-duration
+        retention.  Competitors Kinesis, Pulsar, and GCP Pub/Sub also support long retention.
+
+
+    - The notion of 'replay' is closely related to retention.  It allows a streaming system to return
+        a range of historical stored data.
+
+
+
+- Indexes, Partitioning, and Clustering
+
+    - Indexes provide a map of the table for particular fields and allow extremely fast lookup of 
+        individual records. Without indexes, a database would need to scan an entire table to find the 
+        records satisfying a WHERE condition.
+
+
+    - In most RDBMS's, indexes are used for PKs, FKs, and other columns used to serve the needs of
+        specific applications.  Using indexes, an RDBMS can read and write thousands of rows per
+        second.
+
+
+    - In the early days of MPP systems, they were still row-oriented and used indexes to support
+        joins and condition checking.
+
+
+    - Columnar indexes can be used to speed up analytics queries.  In the past, we denormalized data
+        and avoid joins in columnar databases, but join performance has been drastically improved.
+
+
+    - Since we still want to minimize the data we have to read with columnar databases, we can
+        partition a table into multiple subtables by splitting it on a field.  Date and time-based
+        partitioning are extremely common.
+
+      'Clusters' allow finer-grained organization of data within partitions.
