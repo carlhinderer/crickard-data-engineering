@@ -675,3 +675,242 @@
 
 
 
+- Data Catalog
+
+    - A 'data catalog' is a centralized metadata store for all data across an organization.  It
+        integrates with various systems and abstractions.  
+
+
+    - Data catalogs typically work across operational and analytics data sources, integrating data
+        lineage, presentation of data relationships, and allow user editing of data descriptions.
+
+
+    - Data catalogs are often used to provide a central place where people can view their data, 
+        queries, and data storage. As a data engineer, you’ll likely be responsible for setting up 
+        and maintaining the various data integrations of data pipeline and storage systems that will 
+        integrate with the data catalog and the integrity of the data catalog itself.
+
+
+    - It makes a lot of sense to provide an API that allows programmatic integration with the data
+        catalog.
+
+
+    - In practice, cataloging systems need some kind of automated scanning system that collects
+        metadata from all the various systems.  It can copy existing metadata or infer it for itself.
+
+
+    - Many catalogs provide some kind of UI that is usually similar to a Wiki system.  This allows 
+        users to provide extra information.
+
+
+    - Catalogs are used for both organizational (allow analysts, data scientists, engineers to discover
+        data) and technical (create tables automatically for a data lakehouse) purposes.
+
+
+
+- Data Sharing
+
+    - Data sharing allows organizations and individuals to share specific data and carefully defined
+        permissions with specific entities. 
+
+
+    - Data sharing allows data scientists to share data from a sandbox with their collaborators within
+        an organization. Across organizations, data sharing facilitates collaboration between partner 
+        businesses. For example, an ad tech company can share advertising data with its customers.
+
+
+    - A cloud multitenant environment makes interorganizational collaboration much easier. However, it 
+        also presents new security challenges.  Organizations must carefully control policies that govern 
+        who can share data with whom to prevent accidental exposure or deliberate exfiltration.
+
+
+
+- Schema
+
+    - Schemas desribe the form, file format, structure, and expected data types of the data.  It 
+        doesn't need to be relational.  Data becomes more useful when we have information about it's
+        structure and organization.
+
+
+    - Tranditional data warehouses use schema-on-write.  All writes to the table must conform to the
+        existing schema.
+
+
+    - With schema-on-read, the reader must determine what the schema is supposed to be.  This approach
+        allows for maximum flexibility.
+
+
+
+- Separation of Compute from Storage
+
+    - Clocation of compute and storage has long been a standard method to improve database performance. 
+        For transactional databases, data colocation allows fast, low-latency disk reads and high 
+        bandwidth. Even when we virtualize storage (e.g., using Amazon EBS), data is located relatively 
+        close to the host machine.
+
+
+    - The same basic idea applies for analytics query systems running across a cluster of machines. For
+        example, with HDFS and MapReduce, the standard approach is to locate data blocks that need to 
+        be scanned in the cluster, and then push individual map jobs out to these blocks.  The data scan 
+        and processing for the map step are strictly local. 
+
+      The reduce step involves shuffling data across the cluster, but keeping map steps local 
+        effectively preserves more bandwidth for shuffling, delivering better overall performance; map 
+        steps that filter heavily also dramatically reduce the amount of data to be shuffled.
+
+
+    - Despite the performance gains of colocation, we have shifted towards separating compute and
+        storage, for a few reasons:
+
+        1. It is efficient to use ephemeral servers, which you can scale up and down according to 
+             business needs.
+
+        2. Cloud object stores significantly mitigate the risk of data loss and have very high uptime.
+             If a natural disaster destroys a zone, the data will remain in the remaining zones.
+
+
+    - In practice, we constanty take hybrid approaches between colocation and separation.
+
+      With 'multitier caching', we use object storage for long-term data retention and access, but 
+        but spin up local storage to be used during queries and various stages of the data pipeline.
+        Both AWS and GCP support hybrid object storage.
+
+
+    - Hybrid Example - AWS EMR with S3 and HDFS
+
+        - EMR spins up temporary HDFS clusters to process data.  DE's can reference both S3 and HDFS
+            as a filesystem.
+
+        - A common pattern is to stand up HDFS on SSD drives, pull from S3, and save data from
+            intermediate processing steps on HDFS.  This improves performance over just using S3.
+
+        - After processing is complete, results are stored back to S3.
+
+
+    - Hybrid Example - Apache Spark
+
+        - In practice, Spark generally runs jobs on HDFS or some other ephemeral distributed
+            filesystem to support performant storage of data between processing steps.
+
+        - In addition, Spark relies heavily on in-memory storage of data to improve processing.
+
+        - Since DRAM is very expensive, it makes sense to rent large quantities of memory in the
+            cloud, then release it when we are finished.
+
+
+    - Hybrid Example - Apache Druid
+
+        - Druid relies heavily on SSDs to achieve high performance.  Since SSDs are much more expensive
+            than HDDs, Druid just stores one copy of data in the cluster.
+
+        - To maintain durability, Druid uses object storage as it's durability layer.
+
+        - When data is ingested, it's processed, serialized into compressed columns, and written to
+            cluster SSDs and object storage.
+
+        - If a node fails, data can be automatically recovered to a new node.
+
+
+    - Hybrid Example - Hybrid Object Storage
+
+        - Google Colossus file system supports fine-grained control of data block location, although
+            this is not directly exposed to users.  BigQuery uses it to colocate customer tables in a
+            single location.
+
+        - We call this approach 'hybrid object storage' because it combines the clean abstractions of
+            object storage with some advantages of colocation.
+
+
+    - Zero Copy Cloning
+
+        - Cloud based systems based around object storage support 'zero copy cloning', which means a
+            new copy of an object is created (ie a new table) without necessarily physically copying
+            the underlying data.
+
+        - New pointers are created to the raw data files, and future changes will not be recorded in
+            the old table.  This is like shallow copying in Python.
+
+        - This approach needs to be used very carefully.  For instance, we need to be careful not to
+            accidentally delete the original object.
+
+
+
+- Data Storage Lifecycle
+
+    - We also need to think about the data storage lifecycle and data retention.  For instance, should
+        we keep data around forever, or discard it after a certain time frame?
+
+
+    - Hot Data
+
+        - Accessed very frequently
+        - High storage cost, Low retrieval cost
+        - Store in SSDs or memory
+        - Example - product recommendations and product page results
+        - Example - query results cache
+
+
+    - Warm Data
+
+        - Accessed infrequently
+        - Medium storage cost, medium retrieval cost
+        - S3 'Infrequently Accessed Tier'
+
+
+    - Cold Data
+
+        - Accessed infrequently
+        - Cheap storage cost, high retrieval cost
+        - Store in HDDs, tape storage, cloud-based archival systems
+
+
+    - DEs should be mindful of what happens when hotter storage runs out of space and spills over to
+        colder storage (ie when memory contents are dumped to disk).
+
+
+    - If you use cloud strage, you can create automated lifecycle policies, which can drastically
+        reduce your storage cost.
+
+
+
+- Data Retention
+
+    - In the early days of big data, there was a tendency to err on the side of 'keep everything forever
+        in case you might need it'.  This led to a swamp situation with regulatory nightmares.
+
+
+    - How much value does the data have?  Could it recreated from other data if needed?  What is the
+        impact to downstream systems of deleting it?
+
+
+    - Newer data is usually more valuable than older data.
+
+
+    - Certain regulations (ie HIPAA and PCI) might require you to keep data for a certain time.
+
+
+    - Data is an asset that has a ROI.  Delete it if it has no purpose.
+
+
+
+- Single-Tenant vs Multitenant Storage
+
+    - Using single-tenant storage means that every tenant gets their own storage (ie their own DB).
+        No data is shared, and all storage is isolated.  For instance, if you give each customer
+        their own database.  Schema variation among customers makes applications harder to write,
+        but provides a lot of flexibility.
+
+
+    - Multitenant storage allows for multiple customers' data to reside in the same database.
+
+
+
+- Security
+
+    - Robust security and fine-grained access controls mean that data will be allowed to be shared
+        and consumed more widely within a business.  This raises the value of data.
+
+
+    - Use the principle of least privilege.  Don't give full database access to anyone unless
+        explicitly required.  Most DE's don't need full access.  Pay attention to row, column, and
+        cell-level access.  Give users the information they need and no more.
