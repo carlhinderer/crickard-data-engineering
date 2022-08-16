@@ -557,3 +557,121 @@
         partitioning are extremely common.
 
       'Clusters' allow finer-grained organization of data within partitions.
+
+
+
+- DE Storage Abstractions
+
+    - DE storage absractions and query patterns are at the heart of the DE lifecycle.  You should
+        use the following considerations when choosing abstractions:
+
+            1 Pattern and use case
+
+            2. Update patterns
+
+            3. Cost
+
+            4. Separate storage and compute
+
+
+    - Separation of storage and compute is blurring the lines between OLAP databases and data lakes,
+        with cloud versions of those things rapidly converging.
+
+
+
+- The Data Warehouse
+
+    - Data warehouses are a standard OLAP data architecture.  The term 'data warehouse' can refer to:
+
+        - Technology platforms (GCP BigQuery and Teradata)
+        - An architecture for data centralization
+        - An organizational pattern within a company
+
+
+    - In terms of storage needs, we've gone from:
+
+        1. Using conventional transactional databases
+
+        2. Row-based MPP systems (Teradata and IBM Netezza)
+
+        3. Columnar NPP systems (Vertica and Teradata Columnar)
+
+        4. Cloud data warehouses and data platforms
+
+
+    - In practices, since cloud data warehouses can be used to store massive amounts of data, they can
+        also be orgainzed into data lakes.  One difference is that cloud data warehouses cannot handle
+        truly unstructured data like images, audio, or video.
+
+
+
+- The Data Lake
+
+    - The 'data lake' was conceived as a massive data store, where data was retained in raw,
+        unprocessed form.  Initially, they were built primarily in Hadoop systems.
+
+
+    - A massive migration toward separating storage from compute led to movement away from Hadoop 
+        toward cloud object storage.
+
+
+    - Also, engineers discovered that much of the functionality offered by MPP systems, like schema
+        management and update/delete/merge capabilities, was extremely useful.  This led to the
+        data lakehouse approach.
+
+
+
+- The Data Lakehouse
+
+    - The 'data lakehouse' combines aspects of the data warehouse and data lake.  It stores data in
+        object storage, while adding schema and table support and facilities for managing updates
+        and deletes.
+
+
+    - Lakehouses also typically support table history and rollback, which is accomplished by retaining
+        old versions of files and metadata.
+
+
+    - Databricks heavily promoted the 'lakehouse' concept with Delta Lake, an open source storage
+        management system.  BigQuery and Snowflake also use very similar architectures.
+
+
+    - Apache Hudi and Apache Iceberg are new competitors to Delta Lake.
+
+
+
+- Data Platforms
+
+    - Increasingly, many vendors are styling their products as 'data platforms', where they create
+        an ecosystem of core data storage and tools with tight integration to it.  
+
+
+    - This idea has not been fully fleshed out, but the race is on to create a walled garden of data
+        tools, simplifying engineering and generating vendor lock-in.
+
+
+
+- Stream-to-Batch Storage Architecture
+
+    - The 'stream-to-batch storage architecture' has many similarities to the Lambda architecture.
+        Essentially, data flowing through a topic in the streaming storage system is written out to
+        multiple consumers.
+
+
+    - Some of these consumers might be real-time processing systems that generate statistics on the
+        stream.
+
+      In addition, a batch storage consumer writes data for long-term retention and batch queries.
+
+
+    - The batch consumer could be AWS Kinesis Firehose, which can generate S3 objects based on
+        configurable triggers (ie time and batch size).
+
+
+    - Systems like BigQuery ingest streaming data into a streaming buffer, which is automatically
+        reserialized into columnar object storage.  The query engine supports seamless querying of
+        both the streaming buffer and object data to provide a current, near-real-time view of the
+        table.
+
+
+
