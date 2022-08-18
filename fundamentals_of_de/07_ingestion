@@ -175,37 +175,211 @@
 
 - Push vs Pull vs Poll Patterns
 
-    - 
+    - A 'push' strategy involves a source system sending data to a target, while a 'pull' strategy
+        involves the target reading data directly from the source.
+
+     'Polling' involves periodically checking a data source for any changes.  When changes are 
+        detected, the data is pulled by the target.
+
 
 
 - Batch Ingestion Considerations
 
+    - Batch ingestion, which ivolves processing data in bulk, is often a convenient way to ingest data.
+        Data is ingested by taking a subset of data from a source system, either based on a time
+        interval or the size of accumulated data.
+
+
+    - 'Time-interval batch ingestion' is widespread in traditional ETL.  The pattern is often to
+        process data once a day, but other intervals are used also.
+
+
+    - 'Size-based batch ingestion' is common when dta is moved from a streaming-based system into
+        object storage.  The size criteria could be size in bytes of number of events.
+
+
+    - Commonly-used batch ingestion patterns include:
+
+        - Snapshot or differential extraction
+
+        - File-based export and ingestion
+
+        - ETL vs ELT
+
+        - Inserts, updates, and batch size
+
+        - Data migration
+
+
 
 - Snapshot or Differential Extraction
+
+    - DE's need to decide whether to take full snapshots of a source system or 'differential'
+        (aka 'incremental') updates.
+
+
+    - With differential updates, we pull only the changes and updates since the last read from the
+        source system.
+
+
+    - Differential updates save a lot of target storage and network bandwidth, but full snapshots are
+        still common because of their simplicity.
+
 
 
 - File-Based Export and Ingestion
 
+    - Data is often moved between databases and systems using files.  Data is serialized into files,
+        and the files are provided to an ingestion system.
+
+
+    - This is a push-based ingestion patern, since the data export is done on the source side.
+
+
+    - Advantages of this:
+
+        - May be undesirable to access source system directly for security reasons
+
+        - Source system has complete control over what gets exported
+
+
+    - Common file-exchange methods include SFTP, EDI, and SCP.
+
+
 
 - ETL vs ELT
+
+    - 'Extract' is getting data from the source system.  It may be push or pull-based.
+
+
+    - Once the data is extracted, it can be transformed (ETL) before loading it into a storage
+        destination, or simply loaded into storage for future transformation (ELT).
+
 
 
 - Insert, Updates, and Batch Size
 
+    - Batch-oriented systems often perform poorly when users attempt to perform many small-batch
+        operations rather than a smaller number of large operations.
+
+      While it is common to insert one row at a time in OLTP databases, this a bad pattern for OLAP
+        databases.  Running lots of small in-place operations are even worse for performance.
+
+
+    - Some technologies are purposely-built for high insert rates, like Apache Druid.  Know the
+        characteristics of the tools you are going to use.
+
+
 
 - Data Migration
+
+    - Migrating data from one system to another is not trivial (it might even be PB), and data needs
+        to be moved in bulk.
+
+
+    - Schema management, and handling the differences in schemas between the systems, is crucial
+        during migrations.  Test ingestion of small amounts of data to find issues before undertaking
+        the entire migration.
+
+
+    - File or object storage is often an excellent intermediate place for transferring data.
+
 
 
 - Message and Stream Ingestion Considerations
 
+    - Schema Evolution
 
-- Ways to Ingest
+        - Schema evolution is common when handling event data.  Fields may be added or removed, or
+            value types might change.  An IoT sensor might get a firmware update, and suddently
+            start sending additional fields.
+
+        - If you event-processing framework has a schema registry, use it to version your schemas.
+
+        - A dead-letter-queue can help you investigate issues with events that are not properly
+            handled.
+
+        - Also, try to communicate with upstream stakeholders to learn about schema changes before
+            they actually happen.
+
+
+    - Late-Arriving Data
+
+        - Event data may arrive late for a variety of reasons.  Do not assume that ingestion or
+            process time is the same as event time.
+
+        - To handle late-arriving data, set a cutoff time for when late-arriving data will no longer
+            be processed.
+
+
+    - Ordering and Multiple Delivery
+
+        - Messages may be delivered out of order and more-than-once.
+
+
+    - Replay
+
+        - 'Replay' allows readers to request a range of messages from the history, allowing you to
+            rewind your event history to a particular point in time.
+
+        - This is very helpful when you need to re-ingest or reprocess data for a specific time 
+            range.
+
+        - For example, RabbitMQ typically deletes messages after all subscribers have consumed them.
+            Kafka, Kinesis, and Pub/Sub all support event retention and replay.
+
+
+    - TTL
+
+        - A key parameter is the 'maximum message retention time', aka the TTL.  TTL is a configuration
+            you'll set for how long you want your events to live before they are acknowledged and
+            ingested.
+
+        - Any message not ingested after it's TTL is automatically deleted.
+
+        - This is helpful to reduce backpressure and unnecessary event volume in your event-ingestion
+            pipeline.
+
+        - Google Pub/Sub supports retention up to 7 days.  Kinesis supports up to 1 year.  Kafka can
+            be configured for indefinite retention.
+
+
+    - Error Handling and Dead-Letter Queues
+
+        - An event might be sent to a nonexistent topic or queue, the size might be too large, or it
+            might be past it's TTL.  Events that cannot be ingested should be re-routed to a 
+            dead-letter queue.
+
+        - We should look at the events in this queue to diagnose why this is occurring and resolve
+            the problem.
+
+
+    - Consumer Pull and Push
+
+        - A consumer subscribing to a topic can get events in 2 ways: push and pull.
+
+        - Kafka and Kinesis only support pull subscriptions.  Subscribers read messages from a topic
+            and confirm when they have been processed.  This is the default choice for DE applications.
+
+        - Pub/Sub and Rabbit MQ support pull and push, in which the services write messages to a
+            listener.
+
+
+    - Location
+
+        - It is often desirable to integrate streaming across several locations for enhanced redundancy
+            and to consume data close to where it is generated.
+
+        - We need to balance this across the costs of moving data across regions and running
+            analytics on a combined dataset.  Data egress costs can spiral quickly.
+
 
 
 - Direct Database Connection
 
 
 - Change Data Capture
+
 
 
 - APIs
