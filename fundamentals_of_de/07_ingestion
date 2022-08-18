@@ -1,0 +1,128 @@
+-----------------------------------------------------------------------------
+| CHAPTER 7 - INGESTION                                                     |
+-----------------------------------------------------------------------------
+
+- Data Ingestion
+
+    - 'Data ingestion' is the process of moving from one place to another.  If DE pipelines, it
+        implies data is being moved from source systems into storage to support the DE lifecycle.
+
+
+    - A 'data pipeline' is the combination of architecture, systems, and processes that move data
+        through the stages of the DE lifecycle.
+
+
+
+- Key Engineering Considerations
+
+    - Questions to ask about ingestion
+
+        - What’s the use case for the data I’m ingesting?
+
+        - Can I reuse this data and avoid ingesting multiple versions of the same dataset?
+
+        - Where is the data going? What’s the destination?
+
+        - How often should the data be updated from the source?
+
+        - What is the expected data volume?
+
+        - What format is the data in? Can downstream storage and transformation accept this format?
+
+        - Is the source data in good shape for immediate downstream use?  That is, is the data of good
+            quality? What post-processing is required to serve it?  What are data-quality risks 
+            (e.g., could bot traffic to a website contaminate the data)?
+
+        - Does the data require in-flight processing for downstream ingestion if the data is from a 
+            streaming source?        
+
+
+    - Architectural considerations
+
+        - Bounded versus unbounded
+
+        - Frequency
+
+        - Synchronous versus asynchronous
+
+        - Serialization and deserialization
+
+        - Throughput and elastic scalability
+
+        - Reliability and durability
+
+        - Payload
+
+        - Push versus pull versus poll 
+
+
+
+- Bounded vs Unbounded Data
+
+    - 'Unbouded data' is data as it exists in reality, events happen either sporadically or
+        continuously.  'Bounded data' is a convenient way of bucketing data across some boundary, such
+        as time.
+
+
+    - All data is unbounded until it is bounded.  Business processes have long imposed artificial
+        bounds on data by cutting discrete batches.
+
+
+    - Streaming systems are a tool for preserving the unbouded nature of data, so that subsequent
+        steps can process it continuously.
+
+
+
+- Frequency
+
+    - The data-ingestion frequency is a critical decision when designing pipelines.  Ingestion processes
+        can be batch, micro-batch, or real-time.
+
+
+    - On the slow end, a business might ship it's tax data to an accounting firm once a year.  On the
+        faster side, a CDC system could retrive new log updates from a source database once a minute.
+        An IoT sensor might ingest and process events in seconds.
+
+
+    - ML models are still typically trained on a batch basis, although continuous online training is
+        becoming more common.
+
+
+
+- Synchronous vs Asynchronous Ingestion
+
+    - With 'synchronous ingestion', the source, ingestion, and destination have complex dependencies 
+        and are tightly coupled.  This is common in older ETL systems.
+
+        Process A -> Process B -> Process C   (Sequentially, if one fails we stop)
+
+
+    - For one example of how this can go wrong, one company had a pipeline with dozens of tightly
+        coupled workflows that took > 24 hours to complete.  If any one stage failed, the entire
+        pipeline had to be restarted from the beginning.  Any time there was a problem, reports would
+        be delayed for days.
+
+
+    - With 'asynchronous ingestion', dependencies can operate at the level of individual events,
+        similarly to the microservices approach.  Individual events become available in storage as
+        soon as they are ingested individually.
+
+
+    - Asynchronous ingestion example
+
+        App  ->  Kinesis Data Stream  ->  Beam  ->  Kinesis Data Stream  ->  Kinesis Firehose  ->  S3
+
+
+        1. A web app emits events into Kinesis data stream (which acts as a buffer here)
+
+        2. The stream is read by Beam, which parses and enriches events
+
+        3. Beam forwards the event to a second Kinesis data stream
+
+        4. Kinesis Data Firehose rolls up events and writes objects to S3
+
+
+
+- Serialization and Deserialization
+
+    - When ingesting data, we need to ensure the destination can deserialize data from the source.
