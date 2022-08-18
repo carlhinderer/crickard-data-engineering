@@ -126,3 +126,128 @@
 - Serialization and Deserialization
 
     - When ingesting data, we need to ensure the destination can deserialize data from the source.
+
+
+
+- Throughput and Scalability
+
+    - In theory, ingestion should never be a bottleneck.  In practice, bottlenecks are pretty standard.
+        Design system to grow and shrink according to desired throughput.  This is most easily done
+        using managed tools to handle the scaling.
+
+
+    - If a source database goes down, and then comes back up and attempts to backfill the lapsed
+        data loads, will your ingestion be able to keep up with the backlog?
+
+
+    - Data generation rarely happens at a constant rate, and often ebbs and flows.  We need to be able
+        to handle the bursts.
+
+
+
+- Reliability and Durability
+
+    - We need to build an appropriate level of redundancy and self-healing based on the cost of losing
+        data.
+
+
+
+- Payload
+
+    - A 'payload' is the dataset you're ingesting and has characteristics such as kind, shape, size,
+        schema, data types, and metadata.
+
+        Kind = type (ie tabular, image, video, text) and format (ie csv, parquet, jpeg)
+
+        Shape = dimensions (ie number of rows/columns, RGB values for pixels, # of channels in audio)
+
+        Size = number of bytes in a payload (bytes to TB, may be compressed if large)
+
+        Schema and Data Types = ie relational DB schema, API contract
+
+        Metadata = data about data
+
+
+    - Making changes to schemas requires good communication with consumers.  'Schema registries' are
+        metadata repositories use to maintain schemas and integrity constraints.
+
+
+
+- Push vs Pull vs Poll Patterns
+
+    - 
+
+
+- Batch Ingestion Considerations
+
+
+- Snapshot or Differential Extraction
+
+
+- File-Based Export and Ingestion
+
+
+- ETL vs ELT
+
+
+- Insert, Updates, and Batch Size
+
+
+- Data Migration
+
+
+- Message and Stream Ingestion Considerations
+
+
+- Ways to Ingest
+
+
+- Direct Database Connection
+
+
+- Change Data Capture
+
+
+- APIs
+
+
+- Message Queues and Event-Streaming Platforms
+
+
+- Managed Data Connectors
+
+
+- Moving Data with Object Storage
+
+
+- EDI (Electronic Data Interchange)
+
+
+- Databases and File Export
+
+
+- Practical Issues with Common Formats
+
+
+- Shell
+
+
+- SSH
+
+
+- SFTP and SCP
+
+
+- Webhooks
+
+
+- Web Interface
+
+
+- Web Scraping
+
+
+- Transfer Appliances for Data Migration
+
+
+- Data Sharing
