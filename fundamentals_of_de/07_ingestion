@@ -377,33 +377,191 @@
 
 - Direct Database Connection
 
+    - Data can be pulled directly from databases for ingestion by querying and reading over a network
+        connection.  This connection is commonly made using ODBC or JDBC.
+
+
+    - ODBC uses a driver hosted by a client accessing the database to translate commands issued to the
+        standard ODBC API into commands issued to the database. The database returns query results over
+        the wire, where the driver receives them and translates them back into a standard form and read
+        by the client.
+
+
+    - JDBC is very similar to ODBC, except that the driver is written in Java.  This is very portable
+        since it runs on the JVM, and is compiled using the JIT.
+
+
+    - JDBC provides extraordinay portability.  ODBC drivers are shipped as OS and architecture-native
+        binaries.  DB vendors must maintain versions for each architecture/OS version that they wish to
+        support.  
+
+      On the other hand, vendors can ship a single JDBC driver compatible with any JVM language or
+        JVM data framework.  It is also commonly used in non-JVM languages like Python.
+
+
+    - Many data frameworks can parallelize several simultaneous connections and partition queries to
+        pull data in parallel.  This puts extra load on the DB, though.
+
+
+    - Since these drivers are row-based and struggle with nested data, many databases now export
+        directly to Parquet/ORC/Avro or through REST APIs.
+
+
 
 - Change Data Capture
+
+    - CDC is the process of ingesting changes from a source DB system.  For example, we might have a
+        source PostgreSQL that ingests table changes for analytics.
+
+
+    - Batch-Oriented CDC
+
+        - If the database table has an 'updated_at' field containing the last time a record was written
+            or updated, we can query the table to find all the updated rows since a specific time.
+
+        - A key limitation is that while we have the current state of each row that was changed, we
+            don't have the entire history of changes.
+
+        - For instance, you get a current bank account balance, but you don't get all the debits and
+            credits.
+
+        - We can mitigate this problem using an insert-only schema, where each transaction is recorded
+            as a new record in the table.
+
+
+    - Continuous CDC
+
+        - Continuous CDC captures all table history and can support near-real-time ingestion.  CDC
+            treats each write to the DB as an event.
+
+        - One of the most common approaches with OLTP databases is 'log-based CDC'.  The DB's binary
+            log records every change to the DB sequentially.  A CDC tool can read this log and
+            send events to a target such as Kafka.
+
+        - Some cloud DBs support a simple CDC paradigm where every change to the DB automatically 
+            triggers a serverless function or write to event stream.
+
+
+    - CDC and Database Replication
+
+        - CDC can be used to replicate between databases.  Events are buffered into a stream and
+            asynchronously written to the second database.
+
+        - Many databases use synchronous replication instead.  This keeps replicas fully in sync
+            and supports consistent read replicas.
+
+        - Read replicas are often used in batch ingestion to avoid overloading the primary DB.
+
+
+    - CDC Considerations
+
+        - CDC puts an extra load on the primary data store, and we should be aware of this to avoid
+            operational problems.
+
+        - We may want to run queries during off-hours or using read replicas.
 
 
 
 - APIs
 
+    - A typical organization may have hundreds of external data sources such as SaaS platforms or
+        partner companies.
+
+
+    - Since no hard standards exist for data interchange over APIs, DE's can expect to spend a lot
+        of time reading docs, communicating with data owners, and writing/maintaining API connection
+        code.
+
+
+    - 3 trends are slowly improving this situation:
+    
+        1. Many vendors are now providing client libraries for various PLs
+
+        2. Numerous data connector platforms are now available as SaaS or open source platforms, which
+             offer frameworks for creating custom connectors
+
+        3. Emergence of data sharing through standard platforms like BigQuery, Snowflake, Redshift, or S3
+
+
+    - Reserve your custom connection work for API's that aren't well-supported by existing frameworks.
+
+
 
 - Message Queues and Event-Streaming Platforms
+
+    - Message queues and event-streaming platforms are widespread ways to ingest real-time data from 
+        web and mobile applications, IoT sensors, and smart devices.
+
+
+    - A 'message' is handled at the individual event level, and is meant to be transient.  Once a 
+        message is consumed, it is acknowldeged and removed from the queue.
+
+      A 'stream' ingests events into an ordered log.  The log persists for as long as you wish, 
+        allowing events to be queried over various ranges, aggregated, and combined with other streams
+        to create new transformations published to downstream consumers.
+
+
+        Producer1  ->  Consumer1  \
+                                      Combine Data  ->  Publish 1 + 2 To Producer3
+        Producer2  ->  Consumer2  /
+
+
+    - Batch processing usually involves static workflows (ingest data, store it, transform it, serve it).
+
+      Messages and streams are fluid.  Ingestion can be nonlinear, with data being published, 
+        consumed, replenished, and re-consumed.
+
+
+    - When building real-time data pipelines, messages and events should flow with as little latency
+        as possible.  Make sure to provide sufficient resources for this.  Managed services work well 
+        for real-time ingestion.
+
 
 
 - Managed Data Connectors
 
+    - If you find yourself writing a connector to an API, you should first look into whether one has
+        already been created.  
+
+    - Vendors and OSS projects typically have lots of prebuilt connector options.
+
+
 
 - Moving Data with Object Storage
 
+    - Object storage is a multitenant system in public clouds, and it supports storing massive amounts
+        of data.  This makes it ideal for moving data in and out of data lakes, between teams, and
+        between organizations.
+
+
+    - You can provide short-term access to an object with a signed URL, giving a user temporary
+        permission.  This makes object a very secure and optimal way to handle file exchange.
+
+
 
 - EDI (Electronic Data Interchange)
+
+    - DE's will also likely encounter 'EDI'.  This usually refers to a somewhat archaic means of
+        file exchange, such as by email or flash drive.  Some sources do not support more modern means
+        of transport due to old systems or human process limitations.
+
+    - DE's can try to make these systems as automated as possible.  For instance, they can set up a
+        cloud-based email server that saves files to storage as soon as they are received.  This can
+        trigger orchestration processes to ingest and process data.
+
 
 
 - Databases and File Export
 
 
+
 - Practical Issues with Common Formats
 
 
+
 - Shell
+
+    - 
 
 
 - SSH
