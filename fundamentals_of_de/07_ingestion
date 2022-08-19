@@ -712,5 +712,103 @@
 
 - Data Sharing
 
+    - 'Data sharing' is growing as a popular option for consuming data.  Data providers will provide
+        datasets to third-party suppliers, whether free or at cost.
 
 
+    - These datasets are read-only so that they can integrate with your own data, but you don't own
+        the shared dataset and can't update it.
+
+
+    - Some cloud platform even offer data marketplaces where companies and organizations can put their
+        data up for sale.
+
+
+
+- Stakeholders
+
+    - Think of a DE pipeline as a business with suppliers and customers.  You may be able to offer
+        simple ingestion processes that save departments like marketing a lot of time and money.
+
+
+    - Invite more executive participation in the processes, and communicate the value of source
+        data.  Highlight the contributions of software engineers that provide you with source
+        data.
+
+
+    - Honest communication with stakeholders, especially early in the process, is what adds value.
+
+
+
+- Security
+
+    - Moving data introduces extra security vulnerabilities.  Consider where data lives and where it
+        is going.  
+
+
+    - Data that needs to move within your VPC should use secure endpoints and never leave the confines
+        of the VPC.
+
+
+    - Use a VPN or dedicated private connection to send data between the cloud and an on-premises
+        network.
+
+
+    - If your data traverses the public internet, ensure that the transmission is encrypted.  It is
+        always a good practice to encrypte data over the wire.
+
+
+
+- Data Ethics, Privacy, and Compliance
+
+    - Clients often ask if we should encrypt sensitive data in databases, which begs the question of
+        whether we need that data in the first place.  We should always ask this question before
+        ingesting sensitive data.
+
+      We may be able to just drop sensitive fields from the ingestion.  Data cannot leak if it is
+        never collected.
+
+
+    - If we truly need to keep track of sensitive identities, it is common practice to apply
+        tokenization to anonymize identites in model training and analytics.  If possible, we should
+        hash at ingestion time.
+
+
+    - In some cases, DE's cannot avoid working with sensitive data.  Some analytics systems must
+        provide identifiable, sensitive information.  Aim for 'touchless production' in these cases,
+        where engineers develop and test code on cleansed data in DEV/STAGE.  Automatate code
+        deployments to PROD.
+
+
+    - We may still have to look at sensitive PROD data to debug problems.  In these cases, require
+        approval from at least 2 people to access that sensitive data.
+
+
+    - Most cloud-based storage systems and nearly all databases encrypt data at rest and in motion
+        by default.
+
+
+    - When hashing, make sure to salt your data.  If someone has the email of a customer, we don't
+        want them to easily hash it to identify the customer in our data.
+
+
+
+- DataOps
+
+    - Monitoring your data pipeline is crucial.  This is especially true for ingestion jobs.  If
+        they fail, all downstream systems will be affected.
+
+
+    - Valid data is the foundation to success in today's business.  Bad data is worse than no data,
+        and can untold damage.  These disasters are sometimes called 'datastrophes'.
+
+
+    - Data quality tests are harder to design than smoke tests for software (ie look at request
+        failure rate or response latency for signs of problems.)
+
+      With data ingestion, we might have to run more complicated statistical analysis to look for
+        problems.
+
+
+    - Managed data connectors, such as Fivetran, Matillion, and Airbyte have simplified the 
+        ingestion process.  
