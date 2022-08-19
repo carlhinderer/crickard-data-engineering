@@ -553,33 +553,164 @@
 
 - Databases and File Export
 
+    - Export from some database systems involves full table scans, which will cause performance issues.
+        Sometimes, export queries can be broken into smaller exports by querying over key ranges or
+        one partition at a time.
+
+
+    - Major cloud data warehouses are highly optimized for direct file export. For example, Snowflake, 
+        BigQuery, Redshift, and others support direct export to object storage in various formats.
+
 
 
 - Practical Issues with Common Formats
+
+    - CSV is ubiquitious, but highly error-prone:
+
+        - Data with commas can cause problems
+        - DE's must specify delimiter, quote characters, and escaping string data
+        - No schema support
+        - No nested structures
+
+      In production system, should specify these things in file metadata.  Automatic tools provided by
+        cloud environments are likely to crash.
+
+
+    - More robust and expressive formats include Parquet, Avro, Arrow, ORC, and JSON.  These formats
+        natively encode schema information and handle arbitrary strings without intervention.
+
+
+    - For columnar DBs, columnar formats (Parquet, Arrow, ORC) allow more efficient data export, 
+        because columns can be directly transcoded between formats.
+
+
+    - These formats are generally more optimized for query engines.  For instance, the Arrow format
+        is designed to map data directly into processing engine memory, providing high performance in
+        data lake environments.
+
+
+    - The problem with these new formats is that they are not natively supported by source systems.
+        So, DE's usually end up with CSVs and lots of exception handling.
 
 
 
 - Shell
 
-    - 
+    - The 'shell' is an interface you use to execute commands to ingest data.  The shell can be used
+        to script workflows for virtually any software tool, and shell scripts are used extensively
+        in ingestion processes.
+
+
+    - This approach might be fine if you have a single instance and a small amount of data.
+
+
+    - In addition, cloud vendors usually have robust CLI tools.  You may be able to run your ingestion
+        processes using AWS CLI, for instance.
+
 
 
 - SSH
 
+    - SSH is a protocol that can be used to add security to our ingestion processes.  SSH can be used
+        for file transfer with SCP.  It can also be used to allow secure, isolated connections to
+        DBs.
+
+
+    - Application DBs should never be directly exposed to the internet.  Instead, engineers can set up
+        an intermediate host to connect to the DB in question.  This 'bastion host' (aka 'intermediate 
+        host') is exposed to the internet, but it is locked down to only allow access from specified 
+        IP addresses to specified ports.
+
+      To connect to the DB, a remote machine opens an SSH tunnel to the bastion host, and then connects
+        from the host machine to the DB.
+
+
 
 - SFTP and SCP
+
+    - Sending data from SFTP and SCP are techniques DE's should be familiar with, even though they are
+        rarely used.  It may be the only way to share data with a partner business that has outdated 
+        systems.
+
+
+    - SFTP makes engineers cringe at the security implications, and if someone is using regular FTP
+        you should reject it.  Security analysis is critical in these situations.
+
+
+    - SCP is a file-exchange protocol that runs over SSH.  It can be a secure file-transfer option if
+        configured correctly.
+
 
 
 - Webhooks
 
+    - 'Webhooks' are often referred to as 'reverse APIs'.  The data provider makes API calls rather
+        than receiving them.  It is the data consumer's responsibility to provide an API endpoint
+        for the provider to call.
+
+
+        Webhook Data   ->  Serverless  ->  Event-streaming  ->  Stream     ->  Object
+        Source             Function        Platform             Processor      Storage
+
+
+    - This approach can be brittle and difficult to maintain.  Off-the-shelf tools in platforms like
+        AWS are more reliable.
+
+
 
 - Web Interface
+
+    - Web interfaces for data access remain a practical reality for DE's.  There might not be an API
+        or file drop.  Someone has to manually access a web interface, generate a report, and 
+        download the file to a local machine.
+
+
+    - This has obvious drawbacks, like people forgetting to run the report or having their laptop die.
+        Where possible, choose tools that allow for automation.
+
 
 
 - Web Scraping
 
+    - 'Web scraping' automatically extracts data from web pages by looking through the page's HTML
+        elements.  This practice is widespread, but it is a murky area where legal and ethical lines
+        are blurry.
+
+
+    - If data is available some other way, you should do it.  If you do web scrape, be a good citizen
+        and don't DoS the website, which could get your IP address blocked, your AWS account disabled,
+        or lead to legal consequences.
+
+
+    - Also, web pages constantly change their HTML structure, so you have to constantly update the
+        scraper.
+
+
 
 - Transfer Appliances for Data Migration
 
+    - For massive amounts of data (> 100 TB), transferring data over the internet is slow and costly.
+        At this scale, the fastest and most efficient way to move data is by truck.
+
+
+    - Cloud vendors offer the ability to send your data via a box of hard drives.  Simply order a
+        storage device called a 'transfer appliance', load your data from your servers, and send it
+        to the cloud vendor, who will upload your data.
+
+
+    - The suggestion is to consider this if your data is > 100 TB.  AWS even has 'Snowmobile', a
+        transfer appliance sent to you in a semitrailer.
+
+
+    - Transfer appliances are handy for creating hybrid-cloud or multicloud setups.  For instance,
+        AWS Snowball supports input and output, and can be used to export data to GCP or Azure.
+
+
+    - These approaches are for one-time data loading and should not be used on an ongoing basis.
+
+
 
 - Data Sharing
+
+
+
