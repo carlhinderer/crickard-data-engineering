@@ -1,0 +1,208 @@
+-----------------------------------------------------------------------------
+| CHAPTER 8 - QUERIES, MODELING, & TRANSFORMATION                           |
+-----------------------------------------------------------------------------
+
+- Queries
+
+    - A 'query' allows you to retrieve and act on data.  It gives you CRUD capabilities.
+
+
+    - To create the database objects, we use DDL.
+
+        CREATE DATABASE bar;
+        CREATE TABLE bar_table;
+        DROP TABLE bar_table;
+
+
+    - To add and alter data within these database objects, we use DML.
+
+        SELECT
+        INSERT
+        UPDATE
+        DELETE
+        COPY
+        MERGE
+
+
+    - To limit access to database objects, we use DCL (Data Control Language).
+
+        GRANT
+        DENY
+        REVOKE
+
+
+    - To control the details of transactions, we use TCL (Transaction Control Language).
+
+        COMMIT
+        ROLLBACK
+
+
+
+- The Life of a Query
+
+    - When we execute a SQL query, this is a summary of what happens:
+
+
+        SQL Query  ->  Parsing and    ->  Query Planning    ->  Query      ->  Results
+        Issued         Conversion to      and Optimization      Execution      Returned
+                       Byte code
+
+
+        1. The DB engine compiles the SQL, parses the code to check for proper semantics, and ensures
+             the DB objects referenced exist and the current user has access to them.
+
+        2. The SQL code is converted into byte code.  This bytecode expresses the steps that must be 
+             executed on the database engine in an efficient, machine-readable format.
+
+        3. The database’s query optimizer analyzes the bytecode to determine how to execute the query,
+             reordering and refactoring steps to use available resources as efficiently as possible.
+
+        4. The query is executed, and results are produced.
+
+
+    - A query optimizer's job is to optimize query performance by performing steps in an efficient
+        order.  It will assess joins, indexes, data scan size, and other factors.
+
+
+
+- Improving Query Performance - Optimizing JOIN Strategy and Schema
+
+    - A single table is rarely useful on it's own.  We create value by combining it with other datasets.
+        Joins are the most common way of combining datasets and creating new ones.
+
+
+    - A common technique for improving query performance is to pre-join data.  If analytics queries 
+        are joining the same data repeatedly, it makes sense to join the data in advance and have
+        queries read from the pre-joined data.
+
+      This may mean relaxing normalization to widen the tables.  We could also create materialized
+        views with the joined data and have users query the views.
+
+
+    - We should also consider the complexity of our join conditions.  We can improve complex joins
+        in a few ways.
+
+        1. Many row-oriented DBs allow you to index a result computed from a row.  For instance,
+             Postgres allows you to create an index on a string field converted to lowercase.
+             When the query optimizer sees a 'lower()' in the query, it will use the indes.
+
+        2. We can use CTEs (Common Table Expressions) instead of nested subqueries or temporary
+             tables.  This increases readability, and also can improve performance by not having
+             to create intermediate tables.
+
+
+    - Row Explosion
+
+        - One obscure but frustrating problem is 'row explosion'.  This occurs when we have a large 
+            number of many-to-many matches, either because of repetition in join keys or as a 
+            consequence of join logic.
+
+        - Suppose the join key in TableA has the value 'this' repreated 5 times, and the join key in
+            TableB contains this same value repeated 10 times.  This leads to a cross-join of each of
+            these rows, creating 50 rows in the output.
+
+        - Row explosions can often generate enough rows to consume massive resources or cause the
+            query to fail.
+
+        - We should check to see if the query optimizer is able to reorder joins, and if it isn't,
+            we should reorder them in our query to alleviate this problem
+
+
+
+- Improving Query Performance - Use the Explain Plan
+
+    - The query optimizer's explain plan will show you how it determined the lowest-cost query, the
+        DB objects used (tables, indexes, cache, etc.), and the performance statistics at each stage.
+
+
+    - In addition, we should monitor the performance of our queries.  Things to watch include:
+
+        1. Usage of disk, memory, network
+        2. Data loading time vs processing time
+        3. Query execution time, number of records, size of data scanned, size of data shuffled
+        4. Competing queries that might cause resource contention
+        5. Number of concurrent connections and connections available
+
+
+
+- Improving Query Performance - Avoid Full Table Scans
+
+    - You should only query the data you need.  Avoid 'SELECT *' queries with no predicates.
+
+
+    - Whenever possible, use 'pruning' to reduce the quantity of data scanned in a query.  This 
+        different strategies in row- and column-oriented DBs.
+
+
+    - In a column-oriented DB, only select the columns you need.  Many column-oriented OLAP
+        databases provide tools for optimiation, for example Snowflake and BigQuery let you
+        define a cluster key, which orders the table in a desired way.
+
+
+    - In a row-oriented DB, pruning centers around table indexes.  Create indexes that will improve
+        the performance of your most important queries, but don't create so many that you degrade
+        performance.
+
+
+
+- Improve Query Performance - Know How Your Database Handles Commits
+
+    - A database 'commit' is a change within a database, such as creating, updating, or deleting
+        a record, table, or other database objects.  Many DBs support 'transactions', which combine
+        several operations in a way that maintains a consistent state.
+
+
+    - The purpose of a transaction is to keep the database in a consistent state both when it's active
+        and in the case of a failure.  Also, transactions handle isolation when concurrent events
+        are happening to the same DB objects.
+
+
+    - Example - Postgres
+
+        - Relational DB that uses ACID transactions
+        - Each transaction is a package of operations that will succeed or fail as a group
+        - Analytics queries will always give us a consistent picture at a point in time
+        - Requires row locking
+        - Not optimized for scans over large amounts of data
+
+
+    - Example - BigQuery
+
+        - Utilizes point-in-time full table commit model
+        - When read query is issued, reads from latest committed snapshot of the table
+        - Does not lock table during reads
+        - Subsequent writes create new commits and snapshots
+        - To provent inconsistent state, only allows a single writer at a time
+        - Writers from multiple clients are queued in order of arrival
+        - This commit model is similar to Snowflake, Spark, others
+
+
+    - Example - MongoDB
+
+        - Variable consistency DB, configuration options for DB and per table
+        - Extraordinary scalability and write concurrency in certain modes
+        - DB will discard writes if it gets overwhelmed with traffic
+        - This is suitable for IoT readings where data loss is fine, but not if we need exact data
+
+
+
+- Improve Query Performance - Vacuum Dead Records
+
+    - Transactions incur the overhead of creating new records while retaining old records as pointers
+        the previous state of the database.  Over time, these old records accumulate in the filesystem,
+        and we should remove them using a process called 'vacuuming'.
+
+
+    - You can vacuum a single table, multiple tables, or all tables in a DB.  This frees up space for
+        new records, makes query plans more accurate, and makes indexes more performant.
+
+
+
+- Improve Query Performance - Leverage Cached Query Results
+
+    - If you have a long-running query, it can save a lot of resources to save the results and return
+        them on subsequent reads.  Most OLAP databases provide ways to automatically or manually
+        cache query results.
+
+
+    - Note that materialized views provide another form of query caching.
