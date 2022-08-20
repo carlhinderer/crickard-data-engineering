@@ -206,3 +206,230 @@
 
 
     - Note that materialized views provide another form of query caching.
+
+
+
+- Querying Streams - Basic Query Patterns
+
+    - Since streaming data is constantly in flight, it has very different querying patterns.  We
+        must adapt query patterns to reflect it's real-time nature.
+
+
+    - The Fast-Follower Approach
+
+        - Continuous CDC basically sets up an analytics DB as a fast follower to a PROD DB.
+
+        - We need this approach, rather than just querying the OLTP, since we don't want to bog it
+            down with analytics queries.
+
+        - We could use an OLTP as the follower, but there are significant advantages to using an OLAP
+            system.
+
+        - Both Druid and BigQuery combine a streaming buffer with long-term columnar storage in a setup
+            similar to a Lambda Architecture.
+
+        - The CDC has limitations, in that it doesn't fundamentally rethink the batch pattern approach.
+            You're still calling SELECT against the current table state, and missing the opportunity
+            to manually trigger events off of changes in the stream.
+
+
+    - The Kappa Architecture
+
+        - The principle idea of the Kappa Architecture is to handle all data like events, and store
+            these events in a stream rather than a table.
+
+        - When OLTPs are the source, Kappa stores events from CDC.  Events can also flow from an app
+            backend, IoT swarm, or any other system that generates events.
+
+        - Instead of simply treating a streaming storage system as a buffer, Kappa retains events
+            in storage during a more extended storage period, and data can be directly queried from
+            this storage.  The retention period can be long (months or years).
+
+        - The big idea of Kappa is to treat streaming storage as a real-time transport layer and a
+            database for retrieving and querying historical data.  This happens either through direct
+            query capabilities of the streaming storage or with the help of external tools.
+
+        - For instance, Kakfa KSQL supports aggregation, statistical calculations, and sessionization.
+            If query requirements are more complex, and data needs to be combined with other sources,
+            an external tool such as Spark reads a time range from Kafka and computes the query
+            results.  The streaming storage system can also feed other applications or a stream 
+            processor such as Flink or Beam.
+
+
+
+- Querying Streams - Windows, Triggers, Emitted Statistics, and Late-Arriving Data
+
+    - One fundamental limitation of traditional batch queries is that this paradigm generally treats
+        the query engine as an external observer.  An actor external to the data causes the query to
+        run based on a cron job or someone loading a dashboard.
+
+
+    - Most streaming systems, on the other hand, support the notion of computations triggered directly
+        from the data itself.  They might emit median and mean statistics every time a certain number
+        of records are collected in the buffer or output a summary when a user session closes.
+
+
+    - Windows are an essential feature in streaming queries and processing.  'Windows' are small 
+        batches that are processed based on dynamic triggers.  Windows are generated dynamically over
+        time in several ways.
+
+
+
+- Session Windows
+
+    - A 'session window' groups events that occur close together, and filters out periods of
+        inactivity when no events occur.  We might say that a user session is any time interval
+        with no inactivity gap of 5 minutes or more.
+
+
+    - Our batch system collects data by a user ID key, orders events, determines the gaps and session
+        boundaries, and calculates statistics for each session. Data engineers often sessionize data 
+        retrospectively by applying time conditions to user activity on web and desktop apps.
+
+
+    - In a streaming session, this process can happen dynamically.  Note that session windows are
+        per key.  In this example, each user gets their own set of windows.
+
+
+    - The system accumulates data per user. If a five-minute gap with no activity occurs, the system 
+        closes the window, sends its calculations, and flushes the data. If new events arrive for the 
+        use, the system starts a new session window.
+
+
+    - Session windows may also make a provision for late-arriving data. Allowing data to arrive up
+        to five minutes late to account for network conditions and system latency, the system will
+        open the window if a late-arriving event indicates activity less than five minutes after the
+        last event.
+
+
+    - Making sessionization dynamic and near real-time fundamentally changes its utility. With 
+        retrospective sessionization, we could automate specific actions a day or an hour after a user
+        session closed (e.g., a follow-up email with a coupon for a product viewed by the user).
+
+      With dynamic sessionization, the user could get an alert in a mobile app that is immediately useful
+        based on their activity in the last 15 minutes.
+
+
+
+- Fixed-time Windows
+
+    - A 'fixed time (aka tumbling) window' has fixed time periods that run on a fixed schedule and
+        processes all data since the previous window is closed.  
+
+
+    - For example, we might close a window every 20 seconds and process all data arriving from the
+        previous window to give a mean and median statistic. Statistics would be emitted as
+        soon as they could be calculated after the window closed.
+
+
+    - This is similar to traditional batch ETL processing, where we might run a data update job once
+        every hour or day.  The streaming systems allows us to generate windows more frequently and
+        deliver results with lower latency.  Batch is a special case of streaming!
+
+
+
+- Sliding Windows
+
+    - Events in a 'sliding window' (aka 'hopping window') are bucketed into windows of fixed time length.  
+        For example, we could generate a new 60-second window every 30 seconds. Just as we did before, 
+        we can emit mean and median statistics.
+
+
+        |----Events every 60s------|
+                     |----Events every 60s-------|
+                                   |----Events every 60s--------|
+
+
+        -------------|-------------|-------------|--------------|
+            30 s          30 s          30 s            30 s
+        |_______________________________________________________|
+                              2 mins
+
+
+    - The sliding can vary.  We might think of the window as sliding continuously but emitting statistics
+        only when certain conditions (triggers) are met.
+
+
+    - Suppose we used a 30-second continuously sliding window but calculated a statistic only when a 
+        user clicked a particular banner. This would lead to an extremely high rate of output when many 
+        users click the banner, and no calculations during a lull.
+
+
+
+- Watermarks
+
+    - Sometimes, data is ingested out of the order from which it originated.  A 'watermark' is a 
+        threshold used by a window to determine whether data in a window is within the established time
+        interval or whether it's considered late.
+
+
+    - If data arrives that is new to the window but older than the timestamp of the watermark, it is
+        considered late-arriving data.
+
+
+           Event                      |
+                        Event         |   Event
+                  Event               |           Event
+                                      |
+        ------------------------------|--------------------------> Time
+                                      |
+                                  Watermark
+
+
+
+- Querying Streams - Combining Streams with Other Data
+
+    - We often derive value from data by combining it with other data.  With streaming data, multiple
+        streams can be combined, or a stream can be combined with batch historical data.
+
+
+    - Conventional Table Joins
+
+        - Some tables may be fed by streams.  The most basic approach to comining data is to just
+            join these 2 tables in a database.
+
+
+            Stream 1  ->  Table 1  ->  New Table (1 & 2)
+            Stream 2  ->  Table 2  ->
+
+
+    - Enrichment
+
+        - 'Enrichment' means that we join a stream to other data.  Typically, this is done to provide
+            enhanced data into another stream.
+
+        - For examle, an online retailer receives an event stream from a partner business containing
+            Product and User Ids.  The retailer wishes to enhance these events with product details
+            and demographic information on the users.
+
+        - The retailer feeds these events into a serverless function that looks up the product and user 
+            in an in-memory DB (ie a cache), adds the additional information, then outputs the events
+            to another stream.
+
+            Stream  ---------------------->
+                                                Enriched data
+            Data in Object Storage   ----->
+
+
+        - In practice, the enrichment source could be almost anywhere - a table in a cloud DW, a RDBMS,
+            an object in file storage, etc.
+
+
+
+    - Stream-to-Stream Joining
+
+        - Increasingly, streaming systems support direct stream-to-stream joining.  For instance, an
+            online retailer might join its web event data with streaming data from an ad platform.
+
+        - The company can feed both streams into Spark, but a variety of complications arise.  For
+            instance, the streams may have different latencies.  Certain events may be significantly
+            delayed.
+
+        - Because of this, streaming join architectures rely on streaming buffers.  The buffer
+            retention interval is configurable.  A longer retention interval requires more storage and
+            other resouces.
+
+
+            Ad impression (ad_id)  ->  Stream Buffer \
+                                                       ->  Join Processor  ->  Site Events w/ 
+            Site events (ad_id)    ->  Stream Buffer /                         Ad impression details
