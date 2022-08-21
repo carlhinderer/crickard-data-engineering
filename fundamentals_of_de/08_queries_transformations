@@ -433,3 +433,250 @@
             Ad impression (ad_id)  ->  Stream Buffer \
                                                        ->  Join Processor  ->  Site Events w/ 
             Site events (ad_id)    ->  Stream Buffer /                         Ad impression details
+
+
+
+- What is a Data Model?
+
+    - Well-constructed data architectures must reflect the goals and business logic of the organization
+        that relies on the data.  This is cricial for making data useful for the business.
+
+
+    - Data modeling (both RDBMS and DW) were almost always used until the early-to-mid 2010s, but
+        modeling your data became unfashionable in the early big data era.  Sometimes this was done
+        for legitimate performance reasons, and sometimes it just led to lots of redundant, mismatched,
+        and wrong data.
+
+
+    - The growing popularity of data management has led to a recognition that modeling is critical to
+        move up the 'Data Science Hierarchy of Needs' pyramid.  We will need new data modeling 
+        techniques to embrace the needs of streaming and ML.
+
+
+    - A 'data model' represents the way data relates to the real world.  It reflects how the data must 
+        be structured and standardized to best reflect your organization’s processes, definitions, 
+        workflows, and logic. 
+
+
+    - A good data model captures how communication and work naturally flow within your organization.
+        In contrast, a poor data model (or nonexistent one) is haphazard, confusing, and incoherent.
+
+
+    - For an example, a 'customer' might mean different things to different departments in the company.
+        Is a customer someone who has bought something from you in the last 30 days?  In the last
+        year?  Carefully defining this can have a massive impact on downstream reports.
+
+
+
+- Conceptual, Logical, and Physical Data Models
+
+    - 'Conceptual' models contain logic and rules and describe the system's schema, tables, and 
+        fields (names and types).  Visualizing ER diagrams are the a helpful way to create these models.
+
+
+    - 'Logical' models describe how the conceptual mode will be implemented by adding a lot more
+        detail.  For example, we would add information on the types of customer ID, customer names,
+        and custom addresses.
+
+
+    - 'Physical' models define how the logical model will be implemented in a DB system.  We would
+        add specific databases, schemas, and tables to our logical model, and add configuration
+        details.
+
+
+    - Successful modeling involves stakeholders from the beginning of the process.  It is a practice
+        everyone must continuously participate in.
+
+
+    - Another important consideration when modeling is the 'grain' of the data, the resolution at
+        which data is stored and queried.  The grain is typically at the PK of the data (ie user_id,
+        order_id, product_id).
+
+        - For an example of a coarse-grained report, we create a report that includes all customers
+            who made orders in a day, the total number of orders they made that day, and the total
+            amount they spent.
+
+        - For a more fine-grained report, we could break down each order by the products ordered.
+            This data is at the grain of the customer-order level.
+
+        - It would be tempting, if asked for only the coarse-grained report, to just create a
+            reporting table with only the data asked for.  However, a more experienced engineer will
+            probably create the tables with detailed data on customer orders and aggregate it for
+            the simple report, since someone will ask for it later.
+
+        - In general, we should strive to model data at the lowest level of grain possible.  This
+            is because it is generally impossible to restore details that have been aggregated away.
+
+
+
+- Normalization
+
+    - 'Normalization' is a DB data modeling practive that enforces strict control over the relationship
+        of tables and columns within a DB.  The goal is to remove redundancy and ensure referential
+        integrity.
+
+
+    - Normalization, as applied to relational DBs, was introduced by Edgar Codd in the early 1970s.
+        He outlined 4 objectives for normalization:
+
+        1. Free the collection of relations from undesirable insert, update, and delete dependencies.
+
+        2. Reduce the need for restructuring the collection as new data types are introduced.
+
+        3. Make the relational model more informitive to users.
+
+        4. Make the collection neutral to query statistics.
+
+
+    - He introduced 'normal forms'.  They are sequential, with each form incorporating the condition
+        of prior forms.
+
+        - Denormalized = No normalization, nested and redundant data is allowed
+
+        - 1NF = Each column is unique and has a single value.  The table has a unique PK.
+
+        - 2NF = Partial dependencies are removed.  Partial dependencies occur when a subset of fields
+                  in a composite key can be used to determine a nonkey column of the table.
+
+        - 3NF = Each table contains only data relevant to it's PK, and has no transitive dependencies.
+                  Transitive dependencies occur when a nonkey field depends on another nonkey field.
+
+
+
+- Normalization Example
+
+    - Denormalized
+
+
+        [ORDER_DETAILS]  PK = OrderID
+
+        OrderID    OrderItems                    CustomerID    CustomerName     OrderDate
+        --------------------------------------------------------------------------------------
+        100        [{                            5             Joe Reis         2022-03-01
+                      "sku": 1,
+                      "price": 50,
+                      "quantity": 1,
+                      "name:": "Thingamajig"
+                    }, 
+                    {
+                      "sku": 2,
+                      "price": 25,
+                      "quantity": 2,
+                      "name:": "Whatchamacallit"
+                    }]
+
+
+
+    - 1NF (Remove Multivaled Attribute)
+
+
+        [ORDER_DETAILS]  PK = OrderId
+
+        OrderID   Sku   Price   Quantity   ProductName       CustomerID   CustomerName   OrderDate
+        --------------------------------------------------------------------------------------------
+        100       1     50      1          Thingamajig       5            Joe Reis       2022-03-01
+        100       2     25      2          Whatchamacallit   5            Joe Reis       2022-03-01
+
+
+
+
+    [ORDER_DETAILS]  PK = (OrderID, LineItemNumber)
+
+    OrderID  LineItemNumber Sku  Price  Quantity  ProductName      CustomerID  CustomerName  OrderDate
+    ----------------------------------------------------------------------------------------------------
+    100      1               1    50     1         Thingamajig      5           Joe Reis     2022-03-01
+    100      2               2    25     2         Whatchamacallit  5           Joe Reis     2022-03-01
+
+
+
+    - 2NF (Remove Partial Dependencies)
+
+
+        [ORDERS] PK = OrderId
+
+        OrderID   CustomerID   CustomerName    OrderDate
+        ----------------------------------------------------
+        100       5            Joe Reis        2022-03-01
+        101       7            Matt Housley    2022-03-01
+        102       7            Matt Housley    2022-03-01
+
+
+
+        [ORDER_LINE_ITEMS]  PK = (OrderID, LineItemNumber)
+
+        OrderID   LineItemNumber   Sku   Price   Quantity   ProductName
+        ------------------------------------------------------------------
+        100       1                1     50      1          Thingamajig
+        100       2                2     25      2          Whatchamacallit
+        101       1                3     75      1          Whozeewhatzit
+        102       1                1     50      1          Thingamajig
+
+
+
+    - 3NF (Remove Transitive Dependencies)
+
+
+        [ORDERS] PK = OrderId
+
+        OrderID   CustomerID   OrderDate
+        ------------------------------------
+        100       5            2022-03-01
+        101       7            2022-03-01
+        102       7            2022-03-01
+
+
+        [CUSTOMERS]  PK = CustomerID
+
+        CustomerID   CustomerName 
+        --------------------------
+        5            Joe Reis     
+        7            Matt Housley 
+        7            Matt Housley
+
+
+        [ORDER_LINE_ITEMS]  PK = (OrderID, LineItemNumber)
+
+        OrderID   LineItemNumber   Sku   Price   Quantity
+        -------------------------------------------------
+        100       1                1     50      1       
+        100       2                2     25      2       
+        101       1                3     75      1       
+        102       1                1     50      1       
+
+
+        [SKUS]  PK = (Sku)
+
+        Sku     ProductName
+        ----------------------
+        1       Thingamajig
+        2       Whatchamacallit
+        3       Whozeewhatzit
+        1       Thingamajig
+
+
+
+- Modeling Batch Analytical Data - Inmon
+
+
+- Modeling Batch Analytical Data - Kimball
+
+
+- Modeling Batch Analytical Data - Data Vault
+
+
+- Modeling Batch Analytical Data - Wide Denormalized Tables
+
+
+- Modeling Streaming Data
+
+
+- Transformations
+
+
+- Batch Transformations
+
+
+- Materialized Views, Federations, and Query Virtualization
+
+
+- Streaming Transformations and Processing
