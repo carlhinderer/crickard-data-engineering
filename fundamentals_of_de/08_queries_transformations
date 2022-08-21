@@ -579,13 +579,15 @@
 
 
 
+    - 1NF (Unique PK)
+
 
     [ORDER_DETAILS]  PK = (OrderID, LineItemNumber)
 
     OrderID  LineItemNumber Sku  Price  Quantity  ProductName      CustomerID  CustomerName  OrderDate
     ----------------------------------------------------------------------------------------------------
-    100      1               1    50     1         Thingamajig      5           Joe Reis     2022-03-01
-    100      2               2    25     2         Whatchamacallit  5           Joe Reis     2022-03-01
+    100      1               1    50     1        Thingamajig      5           Joe Reis      2022-03-01
+    100      2               2    25     2        Whatchamacallit  5           Joe Reis      2022-03-01
 
 
 
@@ -655,28 +657,186 @@
 
 
 
+
 - Modeling Batch Analytical Data - Inmon
+
+    - Bill Inmon, father of the DW, created his approach to data modeling in 1990.  Before the DW, 
+        the analysis would usually occur directly on the source system.
+
+
+    - Bill's definition of a DW:
+
+        A DW is a subject-oriented, integrated, nonvolatile, and time-variant collection of data in 
+          support of management’s decisions. The data warehouse contains granular corporate data. Data 
+          in the data warehouse is able to be used for many different purposes, including sitting and 
+          waiting for future requirements which are unknown today.
+
+        1. Subject-Oriented = Focuses on specific area such as sales or marketing
+        2. Nonvolatile = Data is unchanged after it is stored in a DW
+        3. Integrated = Data from disparate sources is consolidated and normalized
+        4. Time-Variant = Varying time ranges can be queried
+
+
+    - Data should be modeled in support of management's decisions.  This is a break from the OLTP
+        approach.  However, the DW still uses 3NF normalization.
+
+
+    - Example - Ecommerce
+
+
+       Orders OLTP     ->            DW             -> Sales Data Mart
+       Inventory OLTP  ->  ELT  ->  (3NF)  --  ETL  -> Marketing Data Mart
+       Marketing OLTP  ->                           -> Purchasing Data Mart
+
+
+    - In this example, Sales, Marketing, and Purchasing each have their own star schema.  This allows
+        each department to have it's own data structure that's unique and optimized to its specific
+        needs.
+
 
 
 - Modeling Batch Analytical Data - Kimball
 
-
-- Modeling Batch Analytical Data - Data Vault
-
-
-- Modeling Batch Analytical Data - Wide Denormalized Tables
+    - Ralph Kimball's approach, created in the early 1990s, takes the opposite approach.  It focuses
+        less on normalization, and sometimes allows denormalization.
 
 
-- Modeling Streaming Data
+    - The Inmon model integrates data from across the business in the DW, and serves department-specific
+        analytics via data marts.  The Kimball model is bottom-up, encouraging you to model and serve
+        department or business analytics in the data warehouse itself.
+
+      This enables faster iteration and modeling, but can lead to looser data integration, redundancy,
+        and duplication.
 
 
-- Transformations
+    - Data is modeled with 2 general types of tables: facts and dimensions.  A 'fact table' can be
+        thought of as a table of numbers, and 'dimension tables' are qualitative data referencing a
+        fact.
 
 
-- Batch Transformations
+    - Dimension tables surround a single fact table in a relationship called a 'star schema'.
+
+         Dimension1  \            / Dimension3
+                       Fact Table
+         Dimension2  /            \ Dimension4
 
 
-- Materialized Views, Federations, and Query Virtualization
+
+- Fact Tables
+
+    - Fact bales contain factual, quantitative, and event-related data.
 
 
-- Streaming Transformations and Processing
+    - The data in a fact table is immutable, since facts relate to events.  They are append-only.
+
+
+    - Fact tables are typically narrow and long, and should be at the lowest grain possible.
+
+
+    - Queries against a star schema start with the fact table.
+
+        
+    - Each row of the table should represent the grain of the data.  Avoid aggregating or deriving
+        data within a fact table.  Perform aggregations or derivations in a downstream query,
+        a data mart table, or a view.
+
+
+    - Fact tables don't reference other fact tables, only dimension tables.
+
+
+    - Here is a fact table for sales events:
+
+        OrderID   CustomerKey   DateKey    GrossSalesAmt
+        ----------------------------------------------------
+        100       5             20220301   100.00
+        101       7             20220301   75.00
+        102       7             20220301   50.00
+
+
+
+- Dimension Tables
+
+    - Dimension tables provide the reference data, attributes, and relational context for the 
+        events stored in the fact tables.
+
+
+    - Dimension tables are smaller, and are typically wide and short.
+
+
+    - When joined to a fact table, dimensions describe the what/where/why of the events.
+
+
+    - Dimensions are denormalized, with the possibility of duplicated data.
+
+        
+    - Dates are typically stored in a date dimention, allowing you to reference a DateKey between
+        the fact and date dimension table.  This allows you to quickly answer questions like 
+        "How many customers shop on Tuesday vs Wednesday?"
+
+        DateKey   Date-ISO    Year   Quarter   Month   Day-of-week
+        -----------------------------------------------------------
+        20220301  2022-03-01  2022   1         3       Tuesday
+        20220302  2022-03-02  2022   1         3       Wednesday
+        20220303  2022-03-03  2022   1         3       Thursday
+
+
+    - Here, we look at the customer dimension table.  In addition to the fields you expect, there are
+        several date fields, which are 'Type 2 slowly changing dimensions'.  They define how long the
+        customer has been in the system.
+
+        CustomerKey   FirstName   LastName   ZipCode   EFF_StartDate   EFF_EndDate
+        ----------------------------------------------------------------------------
+        5             Joe         Reis       84108     2019-01-04      9999-01-01
+        7             Matt        Housley    84101     2020-05-04      2021-09-19
+        7             Matt        Housley    84123     2021-09-19      9999-01-01
+        11            Lana        Belle      90210     2022-02-04      9999-01-01
+
+
+    - We can see that a new record was created when the customer updated their zip code.  This
+        'SCD (Slowly Changing Dimension)' is necessary to track changes in dimensions.  This is a
+        type-2 SCD.
+
+
+    - There are 7 levels of SCDs, but we'll look at the most common ones here:
+
+        Type 1 = Overwrite existing dimension records.  This is simple, but it means you have no access
+                   to historical dimension records.
+
+        Type 2 = Keep a full history of dimension records.  When a record changes, that specific record
+                   is flagged as changed, and a new dimension record is created that reflects the
+                   current status of the attributes.  This is done with the 'EFF_StartDate' and
+                   'EFF_EndDate' fields in our example
+
+        Type 3 = Similar to Type 2, but a new field is added to the existing record, instead of
+                   creating a new record.
+
+
+    - Here is an example of a Type 3 SCD:
+
+        CustomerKey   FirstName   LastName   Original ZipCode   Current ZipCode   CurrentDate
+        ---------------------------------------------------------------------------------------
+        7             Matt        Housley    84101              84123             2021-09-19
+
+
+    - Type 1 is the default in most DWs, and Type 2 is the one most commonly used in practice.
+
+
+
+- Star Schema
+
+    - The 'star schema' represents the data model of the business.  Unlike highly normalized approaches,
+        the star schema is a fact table surrounded by the necessary dimensions.  This results in fewer
+        joins, which speeds up queries, and is easier for business users to understand.
+
+
+    - The star schema doesn't reflect a particular report, but a report can be modeled in a downstream
+        or directly in a BI tool.  The star schema should reflect your business logic, and be
+        flexible enough to answer critical questions.
+
+
+    - Since a star schema only has one fact table, sometimes you have multiple star schemas for different
+        events in the business.  Sometimes, dimensions can be used across multiple fact tables, these
+        are called 'conformed dimensions'.
+
+      Redundant data is OK, but avoid repeating the same dimension tables to avoid data integrity
+        problems.
