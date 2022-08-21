@@ -840,3 +840,133 @@
 
       Redundant data is OK, but avoid repeating the same dimension tables to avoid data integrity
         problems.
+
+
+
+- Modeling Batch Analytical Data - Data Vault
+
+    - Whereas Inmon and Kimball focus on the structure of business logic in the DW, the 'Data Vault'
+        offers a different approach.  It was created in the 1990s by Dan Linstedt.
+
+
+    - The data vault model separates the structural aspects of a source system's data from it's
+        attributes.  Instead of representing business logic in facts, dimensions, or highly-normalized
+        tables, a data vault simply loads data from source systems directly into a handful of 
+        purpose-built tables in an insert-only manner.
+
+
+    - There is no notion of good, bad, or conformed data.  Data moves fast, and this requires a
+        agile, flexible, and scalable approach.  The purpose of this model is to keep data aligned
+        as closely to the business as possible as it evolves.
+
+
+    - A data vault consists of hubs, links, and satellites.  A 'hub' stores business keys, a 'link'
+        maintains relationships among business keys, and a 'satellite' represents a business key's
+        attributes and context.
+
+      A user will query a hub, which will link to a satellite table containing the query's relevant
+        attributes.
+
+
+          Satellite 1  ->  Hub 1  ->  Link  <-  Hub 2  <-  Satellite 2
+
+
+
+- Hubs
+
+    - Queries involve searching by a business key, such as CustomerID or OrderID.  A hub is the central
+        entity of a data vault that retains a record of all business keys loaded into the data vault.
+
+
+    - The hub should reflect the state of the source system from which it loads data.
+
+
+    - A hub always has the following fields:
+
+        Hash key = The PK used to join data between systems.  This is a calculated field (ie MD5).
+
+        Load date = The date the data was loaded into the hub
+
+        Record source = The source system
+
+        Business key = The business key, or record ID, in the source system
+
+
+    - A hub is insert-only, and data from source systems is not altered in a hub.  Once data is loaded
+        into a hub, it is permanent.
+
+
+    - Here is an example of a hub for products:
+
+        [HubProduct]
+
+        ProductHashKey           LoadDate     RecordSource   ProductID
+        --------------------------------------------------------------------------
+        4041fd80ab68e267490522   2020-01-02   ERP            1
+        de8435530d6ca93caabc00   2021-03-09   ERP            2
+        cf27369bd80f53d0e60d39   2021-03-09   ERP            3
+
+
+    - Here is a hub for orders:
+
+        [HubOrder]
+
+        OrderHashKey             LoadDate     RecordSource   OrderID
+        --------------------------------------------------------------------------
+        f899139df5e10593964314   2022-03-01   Website        100
+        38b3eff8baf56627478ec7   2022-03-01   Website        101
+        ec8956637a99787bd197ea   2022-03-01   Website        102
+
+
+
+- Links
+
+    - A 'link table' tracks the relationships of business keys between hubs.  A link table must connect
+        at least 2 hubs.  They are many-to-many tables.
+
+
+    - This approach is very flexible.  If you need to create a new hub, just create it and add a new
+        column to the link table.
+
+
+    - Here is a link table for products and orders:
+
+        [LinkOrderProduct]
+
+        OrderProductHashKey       LoadDate     RecordSource ProductHashKey         OrderHashKey
+        -------------------------------------------------------------------------------------------------
+        ff64ec193d7bacf05e8b97    2022-03-01   Website      4041fd80ab68e267490522 f899139df5e10593964314
+        ff64ec193d7bacf05e8b97    2022-03-01   Website      de8435530d6ca93caabc00 f899139df5e10593964314
+        e232628c251e3cad0f53f7    2022-03-01   Website      cf27369bd80f53d0e60d39 38b3eff8baf56627478ec7
+        26166a5871b6d21ae12e9c    2022-03-01   Website      4041fd80ab68e267490522 48f5ec8956637a99787bd1
+
+
+
+- Satellites
+
+    - Satellites are descriptive attributes that give meaning and context to hubs.  Satellites can 
+        connect to either hubs or links.
+
+
+    - The only required fields in a satellite are a primary key consisting of the business key of the 
+        parent hub and a load date. Beyond that, a satellite can contain however many attributes that 
+        make sense.
+
+
+    - Here is an example of a satellite table for the product hub:
+
+        [SatelliteProduct]
+
+        ProductHashKey           LoadDate     RecordSource   ProductName          Price
+        ---------------------------------------------------------------------------------
+        4041fd80ab68e267490522   2020-01-02   ERP            Thingamajig          50
+        de8435530d6ca93caabc00   2021-03-09   ERP            Whatchamacallit      25
+        cf27369bd80f53d0e60d39   2021-03-09   ERP            Whozeewhatzit        75
+
+
+    - The entire architecture, joined together:
+
+          HubProduct  ->  LinkOrderProduct  <-  HubOrders
+              ^
+              |
+       SatelliteProduct
