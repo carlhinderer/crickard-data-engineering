@@ -970,3 +970,190 @@
               ^
               |
        SatelliteProduct
+
+
+
+- Modeling Batch Analytical Data - Wide Denormalized Tables
+
+    - The strict modeling approaches of Inmon and Kimball were developed when DWs were expensive,
+        on-premises, and heavily resource-constrained with tightly coupled compute and storage.
+
+
+    - For a few reasons, more relaxed approaches are becoming more common:
+
+        1. The cloud makes storage dirt cheap.  It's cheaper to store data than to agonize about the
+             correct format.
+
+        2. Nested data (ie JSON) means schemas are flexible in source and analytical systems.
+
+
+    - You can rigidly model your data using all the techniques above, or you can just throw it all into
+        a single wide table.  A 'wide table' a highly denormalized and very wide collection of many 
+        fields, typically created in a columnar database. A field may be a single value or contain 
+        nested data.
+
+
+    - Data is organized along with one or multiple keys.  These keys are closely tied to the grain
+        of the table.
+
+
+    - A wide table can have thousands of columns, most of which are sparse.  This contrasts from a
+        relational DB approach, where NULLs would be required in all the empty columns.
+
+
+    - Whereas adding a new column in a RDBMS is a slow and resource-heavy process, in wide tables it's
+        a simple metadata change.
+
+
+    - Removing joins can lead to a huge performance speedup on analytics queries.  You don't have to
+        join facts to dimensions.
+
+
+    - Here is a wide table example:
+
+        OrderID   OrderItems                 CustomerID  CustomerName  OrderDate  Site    SiteRegion
+        --------------------------------------------------------------------------------------------
+        100       [{                         5           Joe Reis      2022-03-01 abc.com  US
+                    "sku": 1,
+                    "price": 50,
+                    "quantity": 1,
+                    "name:": "Thingamajig"
+                    }, 
+                    {
+                    "sku": 2,
+                    "price": 25,
+                    "quantity": 2,
+                    "name:": "Whatchamacallit"
+                  }]
+
+
+
+- Modeling Streaming Data
+
+    - Because of the unbounded and continuous nature of streaming data, traditional batch techniques
+        are tricky, if not impossible, to use.  The world is moving from batch and on-premises to
+        streaming and cloud, and some constraints no longer apply.
+
+
+    - There isn't a consensus yet from DEs about how to model streaming data.  Many suggest a data
+        vault as an option.
+
+
+    - 2 main types of streams exist:
+
+        1. Event streams
+        2. CDC
+
+      Most of the time, this data is semistructured (ie JSON).  The challenge is that the payload's
+        schema might change on a whim.  An IoT device might add a field and break downstream
+        processing.  A CDC system might recast a field to a different type.
+
+
+    - Streaming data experts overwhelmingly suggest you anticipate changes in the source data and
+        keep a flexible schema.  This means there is no rigid model in the analytical DB.  Assume the
+        source systems are providing you with the right logic, as it exists today.
+
+
+    - In a world in the not-too-distant future, we may see a new data modeling paradigm that 
+        incorporates metrics and semantic layers, data pipelines, and traditional analytics workflows
+        in a streaming layer that sits directly on top of the source system.
+
+
+
+- Transformations
+
+    - Transformations manipulate, enhance, and save data for downstream use, increasing it's value
+        in a scalable, reliable, and cost-effective manner.
+
+
+    - Whereas a query retrieves data based on filtering and join logic, a transformation persists
+        the results of computation.  The results may be stored ephemerally or permanently.
+
+      Also, complexity can be managed with CTEs or subqueries in a query, but it is much easier to
+        deal with in a pipeline where you can have multiple steps.
+
+
+    - Transformations rely on orchestration.  Orchestration combines many discrete operations, such
+        as intermediate transformations, that store data temporarily or permanently for consumption
+        by downstream transformations and serving.
+
+
+
+- Batch Transformations
+
+    - 'Batch transformations' run on discrete chunks of data, unlike streaming transformations, where
+        data is processed continuously as it arrives.
+
+
+    - Batch transformations can run on a fixed schedule to support ongoing reporting, analytics, and
+        ML models.
+
+
+
+- Distributed Joins
+
+    - The basic idea behind distributed joins is that we need to break a 'logical join' (the join 
+        defined by query logic) into much smaller 'node joins' that run on individual servers in the
+        cluster.
+
+
+    - The basic distributed join patterns apply whether one is in MapReduce, BigQuery, Snowflake, or
+        Spark.  The details of intermediate storage vary between them (on disk or in memory).
+
+
+    - In the best-case scenario, the data on one side of the join is small enough to fit on a single
+        node (broadcast join).  Often, a more resouce-intensive shufle hash join is required.
+
+
+    - Broadcast Joins
+
+        - A 'broadcast join' is generally asymmetric, with one large table distributed across nodes,
+            and one small table that can easily fit on a single node.
+
+        - The query engine 'broadcasts' the small table out to all nodes, where it gets joined to the
+            parts of the large table.
+
+
+        - Logical Join
+
+            TableA   <-->  TableB
+            (small)        (large)
+
+
+        - Node Joins
+
+            TableA    TableA    TableA    TableA
+            TableB1   TableB2   TableB3   TableB4  ...
+
+
+        - In practice, TableA is often a down-filtered larger table that the query engine collects and
+            broadcasts.  Join reordering is one of the top priorities of query optimizers.  Early
+            application of filters can dramatically improve performance.
+
+
+    - Shuffle Hash Joins
+
+        - If neither table is small enough to fit on a single node, the query engine will use a 
+            shuffle hash join.  A hasing algorithm is used to repartition the data by join key.
+
+
+        - In this example, the hashing scheme will partition the join key into 3 parts, with each
+            part assigned to a node.  The data is then reshuffled to the appropriate node, and new
+            partitions 
+
+
+
+- ELT, ETL, and Data Pipelines
+
+
+- SQL and General-Purpose Code-Transformation Tools
+
+    - SQL is Declaritive, But Can Still Build Complex Workflows
+
+    - Example - When to Avoid SQL For Batch Transformations in Spark
+
+
+- Materialized Views, Federations, and Query Virtualization
+
+
+- Streaming Transformations and Processing
