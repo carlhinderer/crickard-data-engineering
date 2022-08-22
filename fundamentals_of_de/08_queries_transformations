@@ -1139,21 +1139,198 @@
 
         - In this example, the hashing scheme will partition the join key into 3 parts, with each
             part assigned to a node.  The data is then reshuffled to the appropriate node, and new
-            partitions 
+            partitions for tables A and B on each node are joined.
 
+            TableA-1    TableA-2    TableA-3
+            TableB-1    TableB-2    TableB-3
+              /|\         /|\         /|\
+
+            TableA-1`   TableA-2`   TableA-3`
+            TableB-1`   TableB-2`   TableB-3`
+            
 
 
 - ELT, ETL, and Data Pipelines
 
+    - Batch ETL is a transformation pattern dating back to the early days of RDBMS.  Traditional ETL
+        relies on an external transformation system to pull, transform, and clean data while 
+        preparing it for a target schema (ie data mart or star schema).
+
+      The transformed data would be loaded into a target system, such as a DW, where business analytics
+        would be performed.
+
+
+    - The ETL pattern itself was driven by the limitations of source and target systems.  The extract
+        phase was a bottleneck due to the constraints of the source RDBMS.  And, the transformation
+        was handled in a dedicated system because the target system was extremely resource-constrained
+        in CPU and storage.
+
+
+    - ELT is a now-popular evolution.  As DW systems have grown in performance and storage capacity,
+        it has become common to simply extract data from a source system, import it into a DW with
+        minimal transformation, and then clean and transform it directly in the DW system.
+
+
+    - A second, slighly different form of ELT became popular with data lakes.  The data is loaded into
+        the lake with no transformations at all.  The assumption is that transformation will happen
+        at some time in the future.
+
+
+    - The line has also blurred between ETL and ELT in the data lakehouse environment.  With object
+        storage at the base layer, it's no longer clear what's in the database and what isn't.
+        Data federation, virtualization, and live tables also complicate the picture.
+
+
+    - Increasingly, the best practice is to apply ETL and ELT at the micro level (data pipelines)
+        rather than the macro level (entire organization).  That way, we can determine the proper
+        technique on a case-by-case basis.
+
+
 
 - SQL and General-Purpose Code-Transformation Tools
 
-    - SQL is Declaritive, But Can Still Build Complex Workflows
+    - Since the introduction of Hive into the Hadoop platform, SQL is a first-class citizen in the
+        big data ecosystem.  For example, SparkSQL was an early feature of Spark.  Streaming frameworks
+        like Kafka, Flink, and Beam also support SQL.
+
+
+    - SQL is declaritive, but can still build complex workflows.  SQL can be effectively used to build
+        complex DAGs using CTEs, SQL scripts, or an orchestration tool.
+
+
+    - SQL has it's limitations, but we often see DE's doing things in Python and Spark that could more
+        easily be done in SQL.
+
 
     - Example - When to Avoid SQL For Batch Transformations in Spark
 
+        - When we decide between using Python/PySpark or SQL/SparkSQL, we should think about:
 
-- Materialized Views, Federations, and Query Virtualization
+            1. How difficult is the transformation to write in SQL?
+            2. How readable and maintainable will the resulting SQL be?
+            3. Should some of the transformation code be pushed into a library for reuse?
+
+        - If you need any external libraries for processing data, Python is a better choice.
+
+        - If it needs to be reusable, Python is a better choice.
 
 
-- Streaming Transformations and Processing
+
+- Optimizing Spark and Other Processing Frameworks
+
+    - Spark acolytes often complain the SQL doesn't give them full control over data processing.  The
+        SQL engine takes your statements, optimizes, and runs them.  With Spark and other code-heavy
+        frameworks, the code writer becomes responsible for much of the optimization.
+
+
+    - Tips for coding in native Spark:
+
+        1. Filter early and often
+
+        2. Rely heavily on the core API, and try to rely on well-maintained public libraries if the
+             native Spark API doesn't support your use case.
+
+        3. Be careful with UDFs.
+
+        4. Consider intermixing SQL.
+
+
+    - Spark is a big data processing framework, and it is resource-heavy.  Only use it if you need it.
+
+
+    - PySpark is an API wrapper for Scala Spark.  Your PySpark code pushes work into native Scala
+        code running on the JVM by calling the API.  Running Python UDFs forces data to be passed
+        to Python, which is much less efficient, so this is best to avoid.  If you must use UDFs, 
+        write them in Java or Scala.
+
+
+    - Using SQL allows us to take advantage of the Spark Catalyst optimizer, which may be able to
+        squeeze out more performance than native code.
+
+
+
+- Update Patterns
+
+    - Since transformations persist data, we will often update persisted data in place.  Updating data
+        is a major pain point for DE teams, especially as they transition between data engineering
+        technologies.
+
+
+    - The original data lake concept didn't really account for updating data, which was a major
+        shortcoming.  It's silly to rerun transformations in queries over and over again, because we
+        have no update capabilities.  GDPR now requires organizations to delete data in a targeted
+        fashion.
+
+
+    - Truncate and Reload
+
+        - In this case, we simply wipe out the old data.  Transformations are rerun and loaded into
+            the table, generating a new table version.
+
+
+    - Insert Only
+
+        - In this case, we insert new records without changing or deleting old records.
+
+        - Insert-only patterns can be used to maintain a current view of the data.  A query of view
+            can present the current data state by finding the newest record by primary key.
+
+        - The downside is that it can be very computationally expensive to find the latest record at
+            query time.
+
+        - Alternatively, we can use a materialized view with a table is insert-only, while the view
+            is a truncate-and-reload target table that holds the current state for serving data.
+
+        - Note that inserting one row at a time is an antipattern in OLAP systems, and is very 
+            inefficient.  One exception to this rule is the Lambda architecture used by BigQuery and
+            Apache Druid, which hybridizes a streaming buffer with columnar storage.  Deletes and
+            in-place updates can still be expensive, though.
+
+
+    - Delete
+
+        - Deletion is critical when a source system deletes data and satisfies regulatory changes.
+
+        - A 'hard delete' permanently removes a record from a database, while a 'soft delete' just
+            marks data as deleted.
+
+        - Hard deletes are useful if you need a delete for performance reasons or to satisfy regulatory
+            compliance.
+
+        - Soft deletes are useful if you don't want to delete a record, just exclude it from query
+            results.
+
+
+    - Upsert / Merge
+
+        - Upserting takes a set of source records and looks for matches against a target table using
+            a PK.  When a key match occurs, the target record gets updated.  When no match occurs,
+            a new record is inserted.  The merge pattern adds the ability to delete records.
+
+        - The upsert pattern was created for row-based systems, where it is a natural pattern.  
+            File-based systems, on the other hand, don't actually support in-place updates.  All of
+            these systems use Copy-On-Write.  If one record in a file is changed or deleted, the
+            entire file must be rewritten with the changes.
+
+        - This is one reason why early big data technologies and data lakes rejected updates.  They
+            assumed data consumers would just determine the current state at query time or in
+            downstream transformations.
+
+        - Columnar databases such as Vertica have long supported in-place updates by hiding the
+            complexity of COW from users.  They scan files, change relevant records, write new files,
+            and change pointers for the table.  Most major columnar cloud DWs support this as well,
+            but you should ckeck before you decide to use a technology.
+
+        - Even if updates are supported, we should be aware the performance impact of an update or
+            delete is quite high.
+
+        - Trying to run real-time merges or updates from CDC, just like you did on your old systems,
+            will cause your columnar DB to bog down and fall behind, know matter how good your CDC
+            system is.  A better approach would be to just run a merge once an hour.
+
+        - BigQuery solves this problem by allowing us to stream insert new records into a table, then
+            supports special materialized views that give us a near-real-time deduplicated table view.
+
+        - Druid solves this problem by using two-tier storage with SSDs to support real-time queries.
+
+        
