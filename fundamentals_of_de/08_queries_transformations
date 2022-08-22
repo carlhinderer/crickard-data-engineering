@@ -1514,3 +1514,139 @@
 
     - Cloud has driven the adoption of these technologies, since it's much cheaper to rent memory
         when you need it than to buy it.
+
+
+
+- Materialized Views, Federations, and Query Virtualization
+
+    - Here, we look at several techniques for virtualizing query results by presenting them as
+        table-like objects.  These techniques can become part of a transformation pipeline, or sit
+        right before end-user consumption.
+
+
+    - Views
+
+        - A 'view' is a DB object that we can select from just like any other table.  A view is just
+            a query that references other tables.
+
+        - When we select from a view, that database creates a new query that combines the view subquery 
+            with our query. The query optimizer then optimizes and runs the full query.
+
+        - Views can serve a security role to restrict access to data.
+
+        - Views can be used to provide a current deduplicated picture of data.  This is especially
+            useful if we have an insert-only pattern.
+
+        - Views can be used to present common data access patterns.  For instance, the marketing team
+            always runs queries that join the same 5 tables.  So, we create a query that joins the
+            5 tables for them.
+
+
+    - Materialized Views
+
+        - Where as views don't do any precomputation, a materialized view does the view computation
+            in advance.
+
+        - For instance, we could update the materialized view with the 5 tables joined together each
+            time a change occurs in the source tables.
+
+
+    - Composable Materialized Views
+
+        - In general, materialized views don't allow composition.  A materialized view cannot select
+            from another materialized view.
+
+        - However, there are tools emerging that support this capability.  Databricks has a concept
+            of 'live tables', where each table is updated as data arrives from sources.  The udpates
+            are performed asynchronously.
+
+
+    - Federated Queries
+
+        - 'Federated queries' are a database feature that allows an OLAP DB to select from an external
+            data source, such as object storage or an RDBMS.
+
+        - For instance, let's say you need to join on tables in MySQL and Postgres DBs.  Your DW can 
+            issue a federated query to these sources and return the combined results.
+
+
+    - Data Virtualization
+
+        - 'Data virtualization' is related to federated queries, but this entails a query system that
+            doesn't store data internally.  Any query/processing engine that supports external tables
+            can serve as a data virtualization engine.
+
+        - Trino and Presto are the most common examples of this kind of system.
+
+        - 'Query pushdown' is a closely related concept.  In this case, the query engine looks for
+            ways to push filtering predicates to the source system for better performance.  This approach
+            offloads the filtering to the RDBMS, and also reduces the amount of data returned.
+
+        - This approach should be used carefully to avoid haphazard complexity, but it can be useful
+            to abstract away data siloed in various parts of the company.
+
+
+
+- Streaming Transformations and Processing
+
+    - There are subtle differences between streaming queries and streaming transformations.
+
+
+    - Basics
+
+        - Streaming queries run dynamically to present a current view of data, while streaming
+            transformations aim to prepare data for downstream consumption.
+
+        - For instance, a DE team may have an incoming stream carrying events from an IoT source.
+            These events carry a device_id and event data.  We wish to dynamically enrich the
+            events with device metadata, which is stored in a separate DB.
+
+        - The stream-processing engine queries a separate DB containing this metadata by device_id,
+            generates new events with the added data, and passes it on to another stream.
+
+        - Live queries and triggered metrics run on this enriched stream.
+
+
+    - Transformations and queries are a continuum
+
+        - The line between transformations and queries is blurry in batch processing, but the 
+            differences become even more subtle in the streaming domain.
+
+        - For instance, if we dynamically compute roll-up statistics on windows, and then send the
+            output to a target stream, is this a transformation or a query?
+
+
+    - Streaming DAGs
+
+        - Though orchestration is thought of as a batch processing topic, what if we could create a
+            DAG to enrich, merge, and split multiple streams in real time?
+
+        - Suppose we wanted to combine website clickstream data with IoT data.  This will allow us to
+            get a unified view of user activity.  Furthermore, each data stream needs to be preprocessed
+            into a standard format.
+
+        - This has long been possible by combining a streaming store (ie Kafka) with a stream processor
+            (ie Flink).  Creating the DAG amounted to building a Rube Goldberg machine, with numerous
+            topics and processing jobs connected.
+
+        - Pulsar dramatically simplifies this process by treaing DAGs as a core streaming abstraction.
+            Rather than managing flows across several systems, DEs can define their DAGs as code inside
+            a single system.
+
+
+    - Micro-Batch vs True Streaming
+
+        - Microbatching is a way to take a batch-oriented framework and apply it in a streaming situation.
+            A micro-batch might run anywhere from once a minute to once a second.
+
+        - Some microbatch frameworks (ie Spark Streaming) are designed for this use case, and will 
+            perform well at high frequencies.
+
+        - True streaming systems (ie Beam and Flink) are designed to process one event at a time.
+            However, this has significant overhead.
+
+        - If you're just using windows and triggers, that is the window frequency?  If you are collecting
+            sales metrics and updating them once every few minutes, micro-batches are probably fine.
+
+        - If you are computing metrics every second to detect DDoS attacks, true streaming is likely
+            the better choice.
